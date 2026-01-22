@@ -42,15 +42,35 @@ class ChatGPTData {
 
     parseSingleConversation(conv) {
         try {
-            const title = conv.title || 'New Chat';
-            const createTime = conv.create_time || conv.timestamp || Date.now() / 1000;
-            const updateTime = conv.update_time || conv.timestamp || Date.now() / 1000;
+            // Detect format and extract metadata
+            const isDeepSeek = conv.inserted_at && conv.updated_at;
+            const isClaude = conv.chat_messages && Array.isArray(conv.chat_messages);
+            const title = conv.title || conv.name || 'New Chat'; // Claude uses 'name' field
+
+            let createTime, updateTime;
+            if (isDeepSeek || isClaude) {
+                // Parse DeepSeek/Claude ISO 8601 timestamps
+                createTime = this.parseISO8601(conv.inserted_at || conv.created_at);
+                updateTime = this.parseISO8601(conv.updated_at);
+            } else {
+                // ChatGPT format (Unix timestamps)
+                createTime = conv.create_time || conv.timestamp || Date.now() / 1000;
+                updateTime = conv.update_time || conv.timestamp || Date.now() / 1000;
+            }
 
             // Parse messages based on format
             let pairs = [];
-            if (conv.mapping) {
-                // ChatGPT data export format - use current_node for traversal
-                pairs = this.parseMappingMessages(conv.mapping, conv.current_node);
+            if (isClaude) {
+                // Claude format with chat_messages array
+                pairs = this.parseClaudeMessages(conv.chat_messages);
+            } else if (conv.mapping) {
+                // Detect if it's DeepSeek or ChatGPT mapping format
+                if (isDeepSeek) {
+                    pairs = this.parseDeepSeekMapping(conv.mapping);
+                } else {
+                    // ChatGPT data export format - use current_node for traversal
+                    pairs = this.parseMappingMessages(conv.mapping, conv.current_node);
+                }
             } else if (conv.messages && Array.isArray(conv.messages)) {
                 // Simple format - convert to pairs
                 pairs = this.convertMessagesToPairs(conv.messages);
@@ -85,7 +105,8 @@ class ChatGPTData {
                 createTime: actualCreateTime,
                 updateTime: actualUpdateTime,
                 pairs: pairs,
-                starred: false
+                starred: false,
+                source: isClaude ? 'claude' : (isDeepSeek ? 'deepseek' : 'chatgpt') // Track source format
             };
         } catch (error) {
             console.error('Error parsing conversation:', error);
@@ -273,6 +294,208 @@ class ChatGPTData {
         });
 
         return pairs;
+    }
+
+    // Parse DeepSeek mapping format with fragments
+    parseDeepSeekMapping(mapping) {
+        const pairs = [];
+        let pairIndex = 1;
+        let currentPair = null;
+
+        // Find all message nodes in the mapping
+        const messageNodes = Object.values(mapping).filter(node => node.message && node.message.fragments);
+
+        // Sort by inserted_at to maintain chronological order
+        messageNodes.sort((a, b) => {
+            const timeA = new Date(a.message.inserted_at).getTime();
+            const timeB = new Date(b.message.inserted_at).getTime();
+            return timeA - timeB;
+        });
+
+        messageNodes.forEach((node) => {
+            const msg = node.message;
+            const fragments = msg.fragments || [];
+            const model = msg.model || 'DeepSeek';
+
+            // Process fragments by type
+            let userContent = '';
+            let thinkContent = '';
+            let responseContent = '';
+            let timestamp = this.parseISO8601(msg.inserted_at);
+
+            fragments.forEach(frag => {
+                if (frag.type === 'REQUEST') {
+                    userContent += frag.content;
+                } else if (frag.type === 'THINK') {
+                    thinkContent += frag.content;
+                } else if (frag.type === 'RESPONSE') {
+                    responseContent += frag.content;
+                }
+            });
+
+            // Create user message
+            if (userContent) {
+                currentPair = {
+                    id: node.id,
+                    question: {
+                        id: node.id,
+                        role: 'user',
+                        content: userContent,
+                        timestamp: timestamp,
+                        metadata: msg,
+                        model: model
+                    },
+                    answers: [],
+                    index: pairIndex++,
+                    starred: false
+                };
+                pairs.push(currentPair);
+            }
+
+            // Create assistant response (with optional thinking)
+            if (responseContent || thinkContent) {
+                if (currentPair) {
+                    const answer = {
+                        id: node.id + '_response',
+                        role: 'assistant',
+                        content: responseContent,
+                        timestamp: timestamp,
+                        model: this.formatModelName(model),
+                        thinking: thinkContent || null, // Store thinking separately
+                        metadata: msg
+                    };
+                    currentPair.answers.push(answer);
+                }
+            }
+        });
+
+        return pairs;
+    }
+
+    // Parse Claude chat_messages format with content arrays
+    parseClaudeMessages(chatMessages) {
+        const pairs = [];
+        let pairIndex = 1;
+        let currentPair = null;
+
+        chatMessages.forEach((msg, idx) => {
+            const role = msg.role || msg.sender;
+            const isUser = role === 'user' || role === 'human'; // Claude uses 'human'
+            const isAssistant = role === 'assistant';
+
+            // Extract text from content array, filtering out tool_use blocks
+            let textContent = '';
+            let hasToolUse = false;
+            const artifacts = []; // Store artifacts separately
+
+            if (msg.content && Array.isArray(msg.content)) {
+                msg.content.forEach(block => {
+                    if (block.type === 'text') {
+                        textContent += block.text || '';
+                    } else if (block.type === 'tool_use') {
+                        hasToolUse = true;
+                        // Check if this is an artifact
+                        if (block.name === 'artifacts' && block.input && block.input.content) {
+                            artifacts.push({
+                                id: block.input.id,
+                                type: block.input.type,
+                                title: block.input.title || 'Artifact',
+                                content: block.input.content
+                            });
+                        }
+                    }
+                    // Ignore tool_result, token_budget, and other non-text blocks
+                });
+            } else if (typeof msg.content === 'string') {
+                textContent = msg.content;
+            }
+
+            // Skip messages that have neither text content nor tool_use
+            if (!textContent.trim() && !hasToolUse) {
+                return;
+            }
+
+            const timestamp = msg.created_at ? this.parseISO8601(msg.created_at) : Date.now() / 1000;
+
+            if (isUser) {
+                // Start a new pair
+                currentPair = {
+                    id: msg.uuid || `msg_${pairIndex}`,
+                    question: {
+                        id: msg.uuid,
+                        role: 'user',
+                        content: textContent,
+                        timestamp: timestamp,
+                        metadata: msg
+                    },
+                    answers: [],
+                    index: pairIndex++,
+                    starred: false
+                };
+                pairs.push(currentPair);
+            } else if (isAssistant && currentPair) {
+                // Add answer to current pair
+                // Even if there's no text content, we create an answer to maintain the pair structure
+                const answer = {
+                    id: msg.uuid + '_response',
+                    role: 'assistant',
+                    content: textContent || '[Tool use only - no text response]',
+                    timestamp: timestamp,
+                    model: 'Claude', // Display Claude as model
+                    metadata: msg,
+                    toolUseOnly: hasToolUse && !textContent.trim(),
+                    artifacts: artifacts.length > 0 ? artifacts : undefined // Store artifacts if present
+                };
+                currentPair.answers.push(answer);
+            }
+        });
+
+        return pairs;
+    }
+
+    // Format model name for display
+    formatModelName(model) {
+        if (!model) return 'AI';
+
+        // If it's already 'Claude', return as-is
+        if (model === 'Claude') return 'Claude';
+
+        const modelLower = model.toLowerCase();
+
+        if (modelLower.includes('deepseek')) {
+            if (modelLower.includes('reasoner')) {
+                return 'DeepSeek Reasoner';
+            }
+            return 'DeepSeek Chat';
+        }
+
+        if (modelLower.includes('gpt')) {
+            return model; // Return GPT model name as-is (e.g., "GPT-4", "gpt-4o")
+        }
+
+        if (modelLower.includes('claude')) {
+            return 'Claude';
+        }
+
+        if (modelLower.includes('gemini')) {
+            return 'Gemini';
+        }
+
+        // Capitalize first letter
+        return model.charAt(0).toUpperCase() + model.slice(1);
+    }
+
+    // Parse ISO 8601 timestamp to Unix timestamp
+    parseISO8601(isoString) {
+        if (!isoString) return Date.now() / 1000;
+
+        try {
+            const date = new Date(isoString);
+            return date.getTime() / 1000;
+        } catch (error) {
+            console.error('Error parsing ISO 8601 timestamp:', isoString, error);
+            return Date.now() / 1000;
+        }
     }
 
     // Parse HTML export

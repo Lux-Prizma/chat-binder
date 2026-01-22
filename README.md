@@ -21,7 +21,7 @@ This project is vibe coded and under construction. Iterating fast currently.
   - Alphabetical (A-Z) - Sort by title
 
 ### 💾 Data Management
-- **Import** ChatGPT exports (JSON and HTML formats)
+- **Import** ChatGPT, Claude, and DeepSeek exports (JSON and HTML formats)
 - **IndexedDB storage** - Handle large datasets efficiently
 - **Export** your parsed data as JSON
 - **Persistent storage** - Data stays in your browser
@@ -34,6 +34,21 @@ This project is vibe coded and under construction. Iterating fast currently.
 1. Go to [chatgpt.com](https://chatgpt.com)
 2. Click on your profile (top-right)
 3. Go to **Settings** → **Personalization** → **Export data**
+4. Request export and wait for the email
+5. Download the ZIP file and extract `conversations.json`
+
+**From Claude:**
+1. Go to [claude.com](https://claude.com)
+2. Click on your profile (top-right)
+3. Go to **Settings** → **Data Export**
+4. Request export and wait for the email
+5. Download the JSON file
+
+**From DeepSeek:**
+1. Go to [chat.deepseek.com](https://chat.deepseek.com)
+2. Click on your profile (top-right)
+3. Go to **Settings** → **Data Export** or **Export Conversations**
+4. Download the JSON file
 4. Request export and wait for the email
 5. Download the ZIP file and extract `conversations.json`
 
@@ -89,9 +104,16 @@ This ensures accurate sorting even if you delete some message pairs.
 
 ### Supported Formats
 
-- **JSON Export** - ChatGPT's native export format
-- **HTML Export** - Individual or bulk HTML conversation files
-- **Multiple formats** - Automatic format detection
+- **ChatGPT** (JSON & HTML exports)
+  - Native export format from ChatGPT data export
+  - HTML conversation files
+- **Claude** (JSON exports)
+  - Native export format from Claude
+  - Automatically hides tool_use blocks
+- **DeepSeek** (JSON exports)
+  - DeepSeek Chat and DeepSeek Reasoner
+  - Collapsible thinking/reasoning sections
+- **Auto-detection** - Automatically identifies format type
 
 ### Browser Compatibility
 

@@ -678,6 +678,60 @@ body {
     padding: 0;
 }
 
+/* Thinking Section */
+.thinking-section {
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    overflow: hidden;
+}
+
+.thinking-toggle {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.thinking-toggle:hover {
+    background-color: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.thinking-toggle svg {
+    transition: transform 0.3s ease;
+}
+
+.thinking-section.collapsed .thinking-toggle svg {
+    transform: rotate(-90deg);
+}
+
+.thinking-section.collapsed .thinking-content {
+    display: none;
+}
+
+.thinking-content {
+    padding: 0 16px 16px 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.thinking-content .message-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 12px;
+}
+
 .message-content {
     max-width: 900px; /* Increased from 768px */
     margin: 0 auto;

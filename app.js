@@ -130,17 +130,14 @@ class ChatGPTParserApp {
 
         for (const file of files) {
             try {
-                console.log('Processing file:', file.name);
                 const content = await file.text();
                 let conversations = [];
 
                 if (file.name.endsWith('.json')) {
                     const jsonData = JSON.parse(content);
                     conversations = this.data.parseJSONExport(jsonData);
-                    console.log('Parsed JSON:', conversations.length, 'conversations');
                 } else if (file.name.endsWith('.html')) {
                     conversations = this.data.parseHTMLExport(content);
-                    console.log('Parsed HTML:', conversations.length, 'conversations');
                 }
 
                 totalConversations.push(...conversations);
@@ -152,9 +149,7 @@ class ChatGPTParserApp {
         }
 
         if (totalConversations.length > 0) {
-            console.log('Adding', totalConversations.length, 'conversations to data store');
             await this.data.addConversations(totalConversations);
-            console.log('Total conversations in store:', this.data.conversations.length);
             alert(`Successfully imported ${totalConversations.length} conversation(s)!`);
             this.updateUI();
         } else {
@@ -394,7 +389,6 @@ class ChatGPTParserApp {
     }
 
     selectConversationWithHighlightedPair(conversationId, pairId) {
-        console.log('Selecting conversation with highlighted pair:', { conversationId, pairId });
         this.data.currentConversationId = conversationId;
         this.highlightedPairId = pairId;
         this.updateUI();
@@ -425,7 +419,6 @@ class ChatGPTParserApp {
 
         const conv = this.data.getCurrentConversation();
         if (conv) {
-            console.log('Displaying conversation:', conv.title, 'with', conv.pairs.length, 'pairs');
             document.getElementById('threadTitleInput').value = conv.title;
             this.renderPairs(conv.pairs);
 
@@ -435,23 +428,17 @@ class ChatGPTParserApp {
                 const scrollToPair = (attempt = 0) => {
                     const highlightedPair = document.querySelector(`.pair-container[data-pair-id="${this.highlightedPairId}"]`);
                     if (highlightedPair) {
-                        console.log('Found highlighted pair, scrolling to it:', this.highlightedPairId);
                         highlightedPair.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         this.highlightedPairId = null; // Clear after scrolling
                     } else if (attempt < 10) {
                         // Try again with a longer delay
-                        console.log('Pair not found yet, attempt', attempt + 1);
                         setTimeout(() => scrollToPair(attempt + 1), 100);
                     } else {
-                        console.error('Could not find highlighted pair after 10 attempts:', this.highlightedPairId);
                         this.highlightedPairId = null;
                     }
                 };
                 setTimeout(() => scrollToPair(), 200);
             }
-        } else {
-            console.error('Conversation not found:', this.data.currentConversationId);
-            console.log('Available conversations:', this.data.conversations.map(c => c.id));
         }
     }
 
@@ -499,11 +486,25 @@ class ChatGPTParserApp {
         container.appendChild(questionEl);
 
         // Create answer element(s) - only put actions on the last answer
-        pair.answers.forEach((answer, index) => {
-            const isLastAnswer = index === pair.answers.length - 1;
-            const answerEl = this.createAnswerElement(answer, pair.id, pair.starred, isLastAnswer);
-            container.appendChild(answerEl);
-        });
+        if (pair.answers.length === 0) {
+            // No response from assistant
+            const noResponseEl = document.createElement('div');
+            noResponseEl.className = 'message assistant';
+            noResponseEl.innerHTML = `
+                <div class="message-content">
+                    <div class="message-body">
+                        <div class="message-text"><em>No response</em></div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(noResponseEl);
+        } else {
+            pair.answers.forEach((answer, index) => {
+                const isLastAnswer = index === pair.answers.length - 1;
+                const answerEl = this.createAnswerElement(answer, pair.id, pair.starred, isLastAnswer);
+                container.appendChild(answerEl);
+            });
+        }
 
         return container;
     }
@@ -525,14 +526,53 @@ class ChatGPTParserApp {
     }
 
     createAnswerElement(answer, pairId, isStarred, showActions) {
-        const div = document.createElement('div');
-        div.className = 'message assistant';
+        const container = document.createElement('div');
+        container.className = 'message assistant';
 
         const timestamp = new Date(answer.timestamp * 1000);
         const timestampStr = this.formatDateTime(timestamp);
 
-        // Get model name, default to 'GPT' if not available
-        const model = answer.model || 'GPT';
+        // Get model name
+        const model = answer.model || 'AI';
+
+        // Build thinking section HTML if present
+        let thinkingHtml = '';
+        if (answer.thinking) {
+            thinkingHtml = `
+                <div class="thinking-section">
+                    <button class="thinking-toggle" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                        <span>Thinking Process</span>
+                    </button>
+                    <div class="thinking-content">
+                        <div class="message-text">${this.formatMessageContent(answer.thinking)}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Build artifact sections HTML if present
+        let artifactsHtml = '';
+        if (answer.artifacts && answer.artifacts.length > 0) {
+            answer.artifacts.forEach((artifact, index) => {
+                const formattedContent = this.formatArtifactContent(artifact.type, artifact.content);
+                artifactsHtml += `
+                    <div class="thinking-section">
+                        <button class="thinking-toggle" onclick="this.parentElement.classList.toggle('collapsed')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                            <span>📦 Artifact: ${this.escapeHtml(artifact.title)}</span>
+                        </button>
+                        <div class="thinking-content">
+                            ${formattedContent}
+                        </div>
+                    </div>
+                `;
+            });
+        }
 
         const actionsHtml = showActions ? `
             <div class="message-actions">
@@ -549,9 +589,11 @@ class ChatGPTParserApp {
             </div>
         ` : '';
 
-        div.innerHTML = `
+        container.innerHTML = `
             <div class="message-content">
                 <div class="message-body">
+                    ${thinkingHtml}
+                    ${artifactsHtml}
                     <div class="message-text">${this.formatMessageContent(answer.content)}</div>
                     ${actionsHtml}
                 </div>
@@ -560,18 +602,58 @@ class ChatGPTParserApp {
 
         // Add event listeners for actions
         if (showActions) {
-            const deleteBtn = div.querySelector('.delete');
+            const deleteBtn = container.querySelector('.delete');
             deleteBtn.addEventListener('click', () => {
                 this.deletePair(pairId);
             });
 
-            const starBtn = div.querySelector('.star');
+            const starBtn = container.querySelector('.star');
             starBtn.addEventListener('click', () => {
                 this.toggleStarPair(pairId);
             });
+
+            // Add toggle listener for thinking section
+            const thinkingToggle = container.querySelector('.thinking-toggle');
+            if (thinkingToggle) {
+                thinkingToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
         }
 
-        return div;
+        return container;
+    }
+
+    formatArtifactContent(type, content) {
+        // Escape HTML to prevent rendering
+        const escapedContent = this.escapeHtml(content);
+
+        // Determine language for syntax highlighting based on type
+        let language = 'text';
+        if (type.includes('html')) {
+            language = 'html';
+        } else if (type.includes('json')) {
+            language = 'json';
+        } else if (type.includes('javascript') || type.includes('js')) {
+            language = 'javascript';
+        } else if (type.includes('python') || type.includes('py')) {
+            language = 'python';
+        } else if (type.includes('css')) {
+            language = 'css';
+        } else if (type.includes('markdown') || type.includes('md')) {
+            language = 'markdown';
+        }
+
+        // Format as code block with syntax highlighting class
+        return `
+            <pre class="message-text"><code class="language-${language}">${escapedContent}</code></pre>
+        `;
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     async selectConversation(id) {
