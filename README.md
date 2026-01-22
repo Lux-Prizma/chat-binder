@@ -4,6 +4,8 @@ A local web application for viewing, organizing, and managing your LLM conversat
 
 This project is vibe coded and under construction. Iterating fast currently.
 
+Current version only support ChatGPT parsing.
+
 ## ✨ Features
 
 ### 📁 Smart Organization
