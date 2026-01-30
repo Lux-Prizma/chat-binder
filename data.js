@@ -322,7 +322,7 @@ class ChatGPTData {
 
             // Step 4: Return standardized conversation object
             return {
-                id: conv.conversation_id || conv.id || `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                id: conv.conversation_id || conv.id || conv.uuid || `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 title: parsed.title || 'New Chat',
                 createTime: normalizedTimestamps.createTime,
                 updateTime: normalizedTimestamps.updateTime,
