@@ -858,6 +858,9 @@ body {
     padding: 12px 16px;
     border-bottom: 1px solid var(--border-color);
     background-color: var(--bg-secondary);
+    display: flex;
+    gap: 12px;
+    align-items: center;
 }
 
 .thread-search {
@@ -867,6 +870,81 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: 1;
+}
+
+/* Question Navigator */
+.question-navigator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.question-navigator svg:first-child {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--text-muted);
+}
+
+.question-select {
+    min-width: 150px;
+    max-width: 200px;
+    padding: 10px 12px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.question-select:focus {
+    border-color: var(--btn-primary);
+}
+
+.question-select:hover {
+    background-color: var(--hover-bg);
+}
+
+.question-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.question-nav-btn:hover:not(:disabled) {
+    background-color: var(--hover-bg);
+    color: var(--text-primary);
+    border-color: var(--text-muted);
+}
+
+.question-nav-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.question-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.question-nav-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 .thread-search svg:first-child {
@@ -1376,6 +1454,19 @@ body {
 
     .upload-box {
         padding: 40px 20px;
+    }
+
+    .thread-search-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .thread-search {
+        max-width: none;
+    }
+
+    .question-navigator {
+        max-width: none;
     }
 }
 

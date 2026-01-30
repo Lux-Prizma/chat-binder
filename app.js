@@ -21,6 +21,11 @@ class ChatGPTParserApp {
             endDate: null
         };
 
+        // Question navigation state
+        this.currentPairs = []; // Store current conversation pairs
+        this.currentQuestionIndex = -1; // Track current visible question
+        this.questionScrollTimeout = null; // Debounce for scroll detection
+
         this.init();
     }
 
@@ -136,6 +141,27 @@ class ChatGPTParserApp {
 
         document.getElementById('searchCloseBtn').addEventListener('click', () => {
             this.clearThreadSearch();
+        });
+
+        // Question navigator
+        document.getElementById('questionSelect').addEventListener('change', (e) => {
+            this.jumpToQuestion(e.target.value);
+        });
+
+        document.getElementById('firstQuestionBtn').addEventListener('click', () => {
+            this.navigateToQuestion('first');
+        });
+
+        document.getElementById('prevQuestionBtn').addEventListener('click', () => {
+            this.navigateToQuestion('prev');
+        });
+
+        document.getElementById('nextQuestionBtn').addEventListener('click', () => {
+            this.navigateToQuestion('next');
+        });
+
+        document.getElementById('lastQuestionBtn').addEventListener('click', () => {
+            this.navigateToQuestion('last');
         });
 
         // Save project
@@ -498,6 +524,7 @@ class ChatGPTParserApp {
         if (conv) {
             document.getElementById('threadTitleInput').value = conv.title;
             this.renderPairs(conv.pairs);
+            this.populateQuestionNavigator(conv.pairs);
 
             // Scroll to highlighted pair if set
             if (this.highlightedPairId) {
@@ -546,6 +573,9 @@ class ChatGPTParserApp {
             const pairEl = this.createPairElement(pair);
             container.appendChild(pairEl);
         });
+
+        // Set up scroll observer to track visible question
+        this.setupScrollObserver();
     }
 
     createPairElement(pair) {
@@ -2040,6 +2070,175 @@ class ChatGPTParserApp {
         // Hide all panels
         document.querySelectorAll('.tab-panel').forEach(panel => {
             panel.style.display = 'none';
+        });
+    }
+
+    // =========================================================================
+    // QUESTION NAVIGATOR METHODS
+    // =========================================================================
+
+    /**
+     * Populate the question navigator dropdown with all questions
+     */
+    populateQuestionNavigator(pairs) {
+        this.currentPairs = pairs;
+        this.currentQuestionIndex = -1;
+
+        const select = document.getElementById('questionSelect');
+        select.innerHTML = '<option value="">Jump to question...</option>';
+
+        pairs.forEach((pair) => {
+            const option = document.createElement('option');
+            const questionPreview = this.getQuestionPreview(pair.question.content, 60);
+            option.value = pair.id;
+            option.textContent = `#${pair.index} ${questionPreview}`;
+            select.appendChild(option);
+        });
+
+        // Update button states
+        this.updateQuestionNavButtons();
+    }
+
+    /**
+     * Navigate to first, prev, next, or last question
+     */
+    navigateToQuestion(direction) {
+        if (this.currentPairs.length === 0) return;
+
+        let targetIndex = 0;
+
+        switch (direction) {
+            case 'first':
+                targetIndex = 0;
+                break;
+            case 'prev':
+                if (this.currentQuestionIndex > 0) {
+                    targetIndex = this.currentQuestionIndex - 1;
+                } else {
+                    targetIndex = 0;
+                }
+                break;
+            case 'next':
+                if (this.currentQuestionIndex < this.currentPairs.length - 1) {
+                    targetIndex = this.currentQuestionIndex + 1;
+                } else {
+                    targetIndex = this.currentPairs.length - 1;
+                }
+                break;
+            case 'last':
+                targetIndex = this.currentPairs.length - 1;
+                break;
+        }
+
+        const targetPair = this.currentPairs[targetIndex];
+        if (targetPair) {
+            this.jumpToQuestion(targetPair.id);
+            this.currentQuestionIndex = targetIndex;
+            this.updateQuestionNavButtons();
+
+            // Update dropdown to match
+            document.getElementById('questionSelect').value = targetPair.id;
+        }
+    }
+
+    /**
+     * Update the enabled/disabled state of navigation buttons
+     */
+    updateQuestionNavButtons() {
+        const firstBtn = document.getElementById('firstQuestionBtn');
+        const prevBtn = document.getElementById('prevQuestionBtn');
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        const lastBtn = document.getElementById('lastQuestionBtn');
+
+        if (this.currentPairs.length === 0) {
+            firstBtn.disabled = true;
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+            lastBtn.disabled = true;
+            return;
+        }
+
+        firstBtn.disabled = false;
+        lastBtn.disabled = false;
+        prevBtn.disabled = this.currentQuestionIndex <= 0;
+        nextBtn.disabled = this.currentQuestionIndex >= this.currentPairs.length - 1;
+    }
+
+    /**
+     * Get a short preview of the question text
+     */
+    getQuestionPreview(content, maxLength) {
+        // Strip HTML tags for preview
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        const text = tempDiv.textContent || tempDiv.innerText || '';
+
+        if (text.length <= maxLength) {
+            return text;
+        }
+        return text.substring(0, maxLength) + '...';
+    }
+
+    /**
+     * Jump to a specific question by pair ID
+     */
+    jumpToQuestion(pairId) {
+        if (!pairId) return;
+
+        const pairElement = document.querySelector(`.pair-container[data-pair-id="${pairId}"]`);
+        if (pairElement) {
+            pairElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Highlight the pair temporarily
+            pairElement.classList.add('highlighted-starred');
+            setTimeout(() => {
+                pairElement.classList.remove('highlighted-starred');
+            }, 2000);
+
+            // Update current question index
+            const pairIndex = this.currentPairs.findIndex(p => p.id === pairId);
+            if (pairIndex !== -1) {
+                this.currentQuestionIndex = pairIndex;
+            }
+        }
+    }
+
+    /**
+     * Set up IntersectionObserver to track which question is visible
+     */
+    setupScrollObserver() {
+        // Remove existing observer if any
+        if (this.scrollObserver) {
+            this.scrollObserver.disconnect();
+        }
+
+        const options = {
+            root: document.getElementById('messagesContainer'),
+            rootMargin: '-20% 0px -60% 0px', // Trigger when element is near center top
+            threshold: 0
+        };
+
+        this.scrollObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const pairId = entry.target.dataset.pairId;
+                    const pairIndex = this.currentPairs.findIndex(p => p.id === pairId);
+
+                    if (pairIndex !== -1 && pairIndex !== this.currentQuestionIndex) {
+                        this.currentQuestionIndex = pairIndex;
+                        this.updateQuestionNavButtons();
+
+                        // Update dropdown without triggering change event
+                        const select = document.getElementById('questionSelect');
+                        select.value = pairId;
+                    }
+                }
+            });
+        }, options);
+
+        // Observe all pair containers
+        document.querySelectorAll('.pair-container').forEach(el => {
+            this.scrollObserver.observe(el);
         });
     }
 }
