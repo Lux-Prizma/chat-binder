@@ -142,24 +142,75 @@
 
     /* Adjust thread search container for mobile */
     .thread-search-container {
-        padding: 10px 12px;
+        padding: 8px 12px;
         gap: 8px;
+        flex-wrap: nowrap;
+        align-items: center;
     }
 
+    /* Hide thread search by default on mobile */
     .thread-search {
+        display: none;
+        width: 100%;
         flex-direction: row;
         gap: 8px;
     }
 
-    /* Question navigator - stack on very small screens */
-    .question-navigator {
-        flex-wrap: wrap;
+    /* Show search when active */
+    .thread-search.active {
+        display: flex;
     }
 
-    .question-select {
+    /* Hide question navigator from top bar on mobile */
+    .question-navigator {
+        display: none;
+    }
+
+    /* ========== MOBILE BOTTOM NAVIGATION ========== */
+    /* Create a bottom navigation bar for mobile */
+    .chat-view::after {
+        content: '';
+        display: block;
+        height: 60px;
+        flex-shrink: 0;
+    }
+
+    /* Mobile bottom nav container - will be added by JS if needed, or we can use a different approach */
+}
+
+/* ========== MOBILE BOTTOM NAVIGATION BAR ========== */
+@media (max-width: 768px) {
+    /* We'll add a mobile-bottom-nav class that can be toggled */
+    .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        padding: 8px 12px;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 50;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .mobile-bottom-nav .question-navigator {
+        display: flex;
         flex: 1;
-        min-width: 120px;
         max-width: none;
+    }
+
+    .mobile-bottom-nav .question-select {
+        flex: 1;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .mobile-bottom-nav .question-nav-btn {
+        flex-shrink: 0;
     }
 
     /* Upload state - adjust padding */
@@ -186,18 +237,25 @@
 
     /* Chat header - adjust for mobile */
     .chat-header {
-        padding: 8px 12px;
-        gap: 8px;
+        padding: 6px 12px;
+        gap: 6px;
+        min-height: 50px;
     }
 
     .sidebar-toggle {
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 6px;
     }
 
     .thread-title-input {
-        font-size: 16px;
+        font-size: 15px;
+        padding: 4px 6px;
+    }
+
+    .edit-title-btn {
+        padding: 4px;
     }
 
     .delete-thread-btn {
@@ -206,8 +264,22 @@
     }
 
     /* Delete thread button text - hide on very small screens */
-    .delete-thread-btn span {
-        display: none;
+    .delete-thread-btn {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* On very small screens, hide delete button text */
+    @media (max-width: 400px) {
+        .delete-thread-btn {
+            font-size: 0;
+            padding: 8px;
+        }
+
+        .delete-thread-btn svg {
+            display: block;
+        }
     }
 
     /* Context menus - position better on mobile */
@@ -312,21 +384,7 @@
         height: 14px;
     }
 
-    /* Question navigator - stack vertically */
-    .question-navigator {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .question-select {
-        order: 1;
-        flex-basis: 100%;
-        margin-bottom: 8px;
-    }
-
-    .question-nav-btn {
-        order: 2;
-    }
+    /* Question navigator - handled by mobile bottom nav, not needed here */
 
     /* Thinking sections */
     .thinking-toggle {

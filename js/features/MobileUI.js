@@ -38,6 +38,8 @@ export class MobileUI {
 
         this.bindEvents();
         this.handleResize();
+        this.setupSearchToggle();
+        this.setupMobileBottomNav();
     }
 
     bindEvents() {
@@ -141,17 +143,62 @@ export class MobileUI {
     // Setup mobile search toggle functionality
     setupSearchToggle() {
         const searchToggle = document.getElementById('threadSearchToggle');
-        const searchInput = document.getElementById('threadSearchInput');
+        const threadSearch = document.querySelector('.thread-search');
 
-        if (!searchToggle || !searchInput) return;
+        if (!searchToggle || !threadSearch) return;
 
         searchToggle.addEventListener('click', () => {
-            if (searchInput.style.display === 'none') {
-                searchInput.style.display = 'block';
-                searchInput.focus();
-            } else {
-                searchInput.style.display = 'none';
+            threadSearch.classList.toggle('active');
+            if (threadSearch.classList.contains('active')) {
+                const searchInput = document.getElementById('threadSearchInput');
+                if (searchInput) searchInput.focus();
             }
         });
+
+        // Close search when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.thread-search-container')) {
+                threadSearch.classList.remove('active');
+            }
+        });
+    }
+
+    // Setup mobile bottom navigation
+    setupMobileBottomNav() {
+        // Only proceed if we're on mobile
+        if (!this.isMobile()) return;
+
+        const chatView = document.getElementById('chatView');
+        const questionNavigator = document.querySelector('.thread-search-container .question-navigator');
+
+        if (!chatView || !questionNavigator) return;
+
+        // Create bottom navigation element
+        let bottomNav = document.querySelector('.mobile-bottom-nav');
+
+        if (!bottomNav) {
+            bottomNav = document.createElement('div');
+            bottomNav.className = 'mobile-bottom-nav';
+
+            // Clone the question navigator
+            const clonedNavigator = questionNavigator.cloneNode(true);
+            bottomNav.appendChild(clonedNavigator);
+
+            // Insert before the messages container ends
+            chatView.appendChild(bottomNav);
+        }
+
+        // Re-bind events to the cloned navigator
+        const originalSelect = document.getElementById('questionSelect');
+        const clonedSelect = bottomNav.querySelector('#questionSelect');
+
+        if (originalSelect && clonedSelect) {
+            clonedSelect.id = 'questionSelectMobile';
+            clonedSelect.addEventListener('change', (e) => {
+                // Trigger the original select's change event
+                originalSelect.value = e.target.value;
+                originalSelect.dispatchEvent(new Event('change'));
+            });
+        }
     }
 }
