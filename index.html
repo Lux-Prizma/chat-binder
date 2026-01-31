@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Conversation Organizer</title>
+    <title>ChatBinder</title>
     <!-- Modular CSS -->
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/layout.css">
@@ -21,7 +21,7 @@
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
-                <span>LLM Conversation Organizer</span>
+                <span>ChatBinder - AI Chat Organizer</span>
             </div>
         </div>
         <div class="nav-right">
@@ -42,7 +42,7 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"></circle>
                     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    <circle cx="12" cy="17" r="0.5" fill="currentColor"></circle>
                 </svg>
                 Help
             </button>
@@ -111,7 +111,7 @@
                         <svg class="folder-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
-                        <span class="folder-title">⭐ Starred Conversations</span>
+                        <span class="folder-title">⭐ Starred Threads</span>
                         <span class="folder-count">(0)</span>
                     </div>
                     <div class="folder-content collapsed" id="starredConversationsContent">
@@ -147,7 +147,7 @@
                     <div class="folder-content" id="allConversationsContent">
                         <div class="empty-state" id="emptyState">
                             <p>No conversations loaded</p>
-                            <small>Import your ChatGPT export to get started</small>
+                            <small>Import your ChatGPT, Claude or other AI chat export to get started</small>
                         </div>
                     </div>
                 </div>
@@ -168,8 +168,8 @@
                     <div class="landing-container">
                         <!-- Title Section -->
                         <div class="landing-title">
-                            <h1>LLM Conversation Parser</h1>
-                            <p class="landing-subtitle">View, organize, and manage your LLM conversation history</p>
+                            <h1>ChatBinder - AI Chat Organizer</h1>
+                            <p class="landing-subtitle">View, organize, and manage your AI chat history</p>
                         </div>
 
                         <!-- Upload Box -->
@@ -183,7 +183,7 @@
                             <p>Upload your exported chat history in JSON format</p>
                             <input type="file" id="fileInput" accept=".json,.html" multiple hidden>
                             <button class="upload-btn" id="uploadBtn">Choose Files</button>
-                            <p class="upload-hint">Supports ChatGPT, DeepSeek, and other LLM exports</p>
+                            <p class="upload-hint">Supports ChatGPT, Claude, DeepSeek, and other LLM exports</p>
                         </div>
                     </div>
                 </div>
@@ -388,7 +388,7 @@
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        <circle cx="12" cy="17" r="0.5" fill="currentColor"></circle>
                     </svg>
                     <h3>Help & Documentation</h3>
                     <p>User guides, keyboard shortcuts, and documentation will be available here.</p>
@@ -426,11 +426,6 @@
     <!-- Hidden file input for import -->
     <input type="file" id="importFileInput" accept=".json" hidden>
 
-    <script src="indexeddb.js"></script>
-    <script src="data.js"></script>
-    <script src="app.js"></script>
-
-    <!-- Context Menus -->
     <div id="conversationContextMenu" class="context-menu" style="display: none;">
         <div class="context-menu-item" data-action="move">Move to...</div>
     </div>
@@ -514,11 +509,9 @@
         </div>
     </div>
 
-    <!-- Legacy data.js and indexeddb.js (will be modularized later) -->
+    <!-- Scripts - loaded only once at the end -->
     <script src="indexeddb.js"></script>
     <script src="data.js"></script>
-
-    <!-- Modular Application (ES Modules) -->
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -3,31 +3,31 @@
  */
 
 import { eventBus } from './core/EventBus.js';
+import { HtmlUtils } from './utils/HtmlUtils.js';
 import { MessageRenderer } from './features/MessageRenderer.js';
-// Note: Other features will be imported as they're created
+import { QuestionNavigator } from './features/QuestionNavigator.js';
+import { DateFilter } from './features/DateFilter.js';
+import { FolderManager } from './features/FolderManager.js';
+import { ContextMenu } from './features/ContextMenu.js';
+import { ConversationList } from './features/ConversationList.js';
 
 class ChatGPTParserApp {
     constructor() {
-        this.data = chatData; // Global data instance from data.js
+        this.data = chatData;
         this.currentView = 'upload';
         this.searchResults = [];
         this.currentSort = 'newestCreated';
         this.highlightedPairId = null;
 
-        // Date filter state
-        this.dateFilter = {
-            active: false,
-            type: 'createTime',
-            startDate: null,
-            endDate: null
-        };
-
-        // Question navigation state
-        this.currentPairs = [];
-        this.currentQuestionIndex = -1;
-
         // Initialize features
         this.messageRenderer = new MessageRenderer(eventBus, this.data);
+        this.questionNavigator = new QuestionNavigator(eventBus);
+        this.contextMenu = new ContextMenu(eventBus, this.data, () => this.updateConversationList());
+        this.conversationList = new ConversationList(eventBus, this.data, this.contextMenu);
+
+        // Date filter and folder manager need callbacks
+        this.dateFilter = new DateFilter(eventBus, this.data, () => this.updateConversationList());
+        this.folderManager = new FolderManager(eventBus, this.data, () => this.updateConversationList());
 
         this.init();
     }
@@ -72,11 +72,6 @@ class ChatGPTParserApp {
             this.updateConversationList();
         });
 
-        // Filter button
-        document.getElementById('filterBtn').addEventListener('click', () => {
-            this.showDateFilterDialog();
-        });
-
         // Folder headers
         document.querySelectorAll('.folder-header[data-folder]').forEach(header => {
             header.addEventListener('click', (e) => {
@@ -115,9 +110,16 @@ class ChatGPTParserApp {
             this.deleteCurrentThread();
         });
 
-        // Thread search
+        // Thread search - connect to MessageRenderer via EventBus
         document.getElementById('threadSearchInput').addEventListener('input', (e) => {
             eventBus.emit('search:query', { query: e.target.value });
+        });
+
+        document.getElementById('threadSearchInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                eventBus.emit('search:next');
+            }
         });
 
         document.getElementById('searchNextBtn').addEventListener('click', () => {
@@ -144,16 +146,25 @@ class ChatGPTParserApp {
             }
         });
 
-        // New Folder button
-        document.getElementById('newFolderBtn').addEventListener('click', () => {
-            this.showNewFolderDialog();
-        });
-
-        // Setup event bus listeners
+        // Setup event bus listeners for inter-module communication
         this.setupEventBusListeners();
     }
 
     setupEventBusListeners() {
+        // Conversation selection
+        eventBus.on('conversation:select', async (data) => {
+            await this.selectConversation(data.id);
+        });
+
+        eventBus.on('conversation:selectWithPair', (data) => {
+            this.selectConversationWithHighlightedPair(data.conversationId, data.pairId);
+        });
+
+        eventBus.on('conversation:star', async (data) => {
+            await this.toggleStarConversation(data.id);
+        });
+
+        // Message actions
         eventBus.on('pair:delete', async (data) => {
             if (this.data.currentConversationId && confirm('Delete this message pair? This cannot be undone.')) {
                 await this.data.deletePair(this.data.currentConversationId, data.pairId);
@@ -316,8 +327,6 @@ class ChatGPTParserApp {
     }
 
     updateConversationList() {
-        // This will be extracted to ConversationList feature
-        // For now, keep simplified version
         let allConversations = this.data.conversations;
         const starredConversations = allConversations.filter(conv => conv.starred);
         const allStarredPairs = this.data.getStarredPairs();
@@ -337,116 +346,16 @@ class ChatGPTParserApp {
             });
         }
 
+        // Apply date filter if active
+        if (this.dateFilter.filter.active) {
+            allConversations = allConversations.filter(conv => this.dateFilter.matches(conv));
+        }
+
         const sortedAll = this.sortConversations(allConversations);
         const sortedStarred = this.sortConversations(starredConversations);
 
-        document.querySelector('#allConversationsFolder .folder-count').textContent = `(${sortedAll.length})`;
-        document.querySelector('#starredConversationsFolder .folder-count').textContent = `(${sortedStarred.length})`;
-        document.querySelector('#starredPairsFolder .folder-count').textContent = `(${allStarredPairs.length})`;
-
-        this.renderConversationFolder(document.getElementById('allConversationsContent'), sortedAll);
-        this.renderConversationFolder(document.getElementById('starredConversationsContent'), sortedStarred);
-        this.renderStarredPairsFolder(document.getElementById('starredPairsContent'), allStarredPairs);
-    }
-
-    renderConversationFolder(container, conversations) {
-        container.innerHTML = '';
-
-        if (conversations.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>No conversations</p>
-                    <small>Import your ChatGPT export to get started</small>
-                </div>
-            `;
-            return;
-        }
-
-        conversations.forEach(conv => {
-            const item = this.createConversationItem(conv);
-            container.appendChild(item);
-        });
-    }
-
-    renderStarredPairsFolder(container, starredPairs) {
-        container.innerHTML = '';
-
-        if (starredPairs.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>No starred pairs yet</p>
-                    <small>Star pairs to see them here</small>
-                </div>
-            `;
-            return;
-        }
-
-        starredPairs.forEach((pair) => {
-            const item = this.createStarredPairItem(pair);
-            container.appendChild(item);
-        });
-    }
-
-    createConversationItem(conv) {
-        const item = document.createElement('div');
-        item.className = 'conversation-item';
-        item.dataset.id = conv.id;
-
-        if (this.data.currentConversationId === conv.id) {
-            item.classList.add('active');
-        }
-
-        item.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <div class="conversation-item-title" title="${conv.title}">
-                ${conv.title}
-            </div>
-            <span class="star-icon ${conv.starred ? 'starred' : ''}" data-id="${conv.id}">
-                ${conv.starred ? '⭐' : '☆'}
-            </span>
-        `;
-
-        item.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('star-icon')) {
-                this.selectConversation(conv.id);
-            }
-        });
-
-        const starIcon = item.querySelector('.star-icon');
-        starIcon.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleStarConversation(conv.id);
-        });
-
-        return item;
-    }
-
-    createStarredPairItem(pair) {
-        const item = document.createElement('div');
-        item.className = 'conversation-item';
-        item.dataset.pairId = pair.id;
-        item.dataset.conversationId = pair.conversationId;
-
-        const previewText = pair.question.content.substring(0, 50);
-        const truncatedText = previewText.length < pair.question.content.length
-            ? previewText + '...'
-            : previewText;
-
-        item.innerHTML = `
-            <span class="star-icon starred">💎</span>
-            <div class="conversation-item-title" title="${pair.question.content}">
-                ${truncatedText}
-            </div>
-            <small style="color: var(--text-muted);">from "${pair.conversationTitle}"</small>
-        `;
-
-        item.addEventListener('click', () => {
-            this.selectConversationWithHighlightedPair(pair.conversationId, pair.id);
-        });
-
-        return item;
+        // Use ConversationList module to render
+        this.conversationList.render(sortedAll, sortedStarred, allStarredPairs);
     }
 
     async selectConversation(id) {
@@ -495,9 +404,11 @@ class ChatGPTParserApp {
         const conv = this.data.getCurrentConversation();
         if (conv) {
             document.getElementById('threadTitleInput').value = conv.title;
-            this.currentPairs = conv.pairs;
             this.messageRenderer.highlightedPairId = this.highlightedPairId;
             this.messageRenderer.renderPairs(conv.pairs);
+
+            // Use QuestionNavigator module to populate dropdown and setup scroll observer
+            this.questionNavigator.populate(conv.pairs);
 
             // Scroll to highlighted pair if set
             if (this.highlightedPairId) {
@@ -537,14 +448,6 @@ class ChatGPTParserApp {
         document.querySelectorAll('.tab-panel').forEach(panel => {
             panel.style.display = 'none';
         });
-    }
-
-    showNewFolderDialog() {
-        document.getElementById('newFolderDialog').style.display = 'flex';
-    }
-
-    showDateFilterDialog() {
-        document.getElementById('dateFilterDialog').style.display = 'flex';
     }
 }
 

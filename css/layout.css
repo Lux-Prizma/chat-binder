@@ -12,7 +12,7 @@
 /* ========== SIDEBAR ========== */
 .sidebar {
     width: 300px;
-    height: 100vh;
+    height: 100%;
     background-color: var(--bg-secondary);
     border-right: 1px solid var(--border-color);
     display: flex;
@@ -307,7 +307,40 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 40px;
+    padding: 40px 0;
+    width: 100%;
+    min-height: 0;
+}
+
+.landing-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    max-width: 800px;
+    width: 100%;
+    text-align: center;
+}
+
+.landing-title {
+    text-align: center;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.landing-title h1 {
+    font-size: 42px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.landing-subtitle {
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
 }
 
 .upload-box {
@@ -317,6 +350,13 @@
     border: 2px dashed var(--border-color);
     border-radius: 12px;
     background-color: var(--bg-secondary);
+    transition: border-color 0.2s, background-color 0.2s;
+    margin-top: 0;
+}
+
+.upload-box:hover {
+    border-color: var(--btn-primary);
+    background-color: var(--hover-bg);
 }
 
 .upload-box svg {

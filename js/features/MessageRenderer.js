@@ -360,6 +360,15 @@ export class MessageRenderer {
             block: 'center'
         });
 
+        // Find the parent pair-container and emit event to update question navigator
+        const pairContainer = matchElement.closest('.pair-container');
+        if (pairContainer) {
+            const pairId = pairContainer.dataset.pairId;
+            if (pairId) {
+                this.eventBus.emit('question:navigate', { pairId });
+            }
+        }
+
         this.updateMatchCount();
     }
 
