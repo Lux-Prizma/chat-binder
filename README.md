@@ -2,7 +2,7 @@
 
 A local web application for viewing, organizing, and managing your LLM conversation history. Works entirely in your browser - no data leaves your device.
 
-This project is vibe coded and under construction. Iterating fast currently.
+This is an active project. Iterating fast currently but welcome testing! 
 
 Current version support ChatGPT，Claude and DeepSeek conversations, as well as reading the parser's own file.
 
@@ -30,6 +30,7 @@ Current version support ChatGPT，Claude and DeepSeek conversations, as well as 
 
 ## ✨ Future features: to dos ✨
 
+- **Metadata format optimizing <- next**
 - **Custom range export**
 - **More LLM conversation support**
 - **Better sort (By model type etc.)**
