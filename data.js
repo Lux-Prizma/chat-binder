@@ -619,30 +619,73 @@ class ChatGPTData {
                         textContent += block.text || '';
                     } else if (block.type === 'tool_use') {
                         hasToolUse = true;
-                        // Check if this is an artifact (old format with name='artifacts')
+
+                        // Track if we've already captured an artifact from this block to avoid duplicates
+                        let artifactCaptured = false;
+
+                        // Priority 1: Check display_content.json_block (new file creation format)
+                        if (block.display_content && block.display_content.type === 'json_block' && block.display_content.json_block) {
+                            console.log('[Artifact] Found json_block format for', block.name);
+                            try {
+                                const jsonData = JSON.parse(block.display_content.json_block);
+                                if (jsonData.code || jsonData.content) {
+                                    const filename = jsonData.filename?.split('/').pop() || block.name || 'Artifact';
+                                    artifacts.push({
+                                        id: filename,
+                                        type: jsonData.language || 'text',
+                                        title: filename,
+                                        content: jsonData.code || jsonData.content || ''
+                                    });
+                                    artifactCaptured = true;
+                                    console.log('[Artifact] ✓ Captured from json_block:', filename);
+                                }
+                            } catch (error) {
+                                console.warn('[Artifact] ✗ Failed to parse json_block:', error);
+                            }
+                        }
+
+                        // Priority 2: Check display_content.code_block (another file creation format)
+                        if (!artifactCaptured && block.display_content && block.display_content.type === 'code_block' && block.display_content.code) {
+                            const filename = block.display_content.filename?.split('/').pop() ||
+                                              (block.input && block.input.path?.split('/').pop()) ||
+                                              block.name || 'Artifact';
+                            console.log('[Artifact] Found code_block format for', block.name, '->', filename);
+                            artifacts.push({
+                                id: filename,
+                                type: block.display_content.language || 'text',
+                                title: filename,
+                                content: block.display_content.code
+                            });
+                            artifactCaptured = true;
+                            console.log('[Artifact] ✓ Captured from code_block:', filename, 'length:', block.display_content.code.length);
+                        }
+
+                        // Priority 3: Check create_file with input.file_text (fallback when no display_content)
+                        if (!artifactCaptured && block.name === 'create_file' && block.input && block.input.file_text) {
+                            const filePath = block.input.path || '';
+                            const fileName = filePath.split('/').pop() || 'Artifact';
+                            const fileExt = fileName.split('.').pop() || 'txt';
+
+                            console.log('[Artifact] Found file_text format for', block.name, '->', fileName);
+                            artifacts.push({
+                                id: fileName,
+                                type: fileExt,
+                                title: fileName,
+                                content: block.input.file_text
+                            });
+                            artifactCaptured = true;
+                            console.log('[Artifact] ✓ Captured from file_text:', fileName, 'length:', block.input.file_text.length);
+                        }
+
+                        // Priority 4: Old format artifacts (name='artifacts' with input.content)
                         if (block.name === 'artifacts' && block.input && block.input.content) {
+                            console.log('[Artifact] Found old format artifacts');
                             artifacts.push({
                                 id: block.input.id,
                                 type: block.input.type,
                                 title: block.input.title || 'Artifact',
                                 content: block.input.content
                             });
-                        }
-                        // Check if this has display_content with json_block (new file creation format)
-                        if (block.display_content && block.display_content.type === 'json_block' && block.display_content.json_block) {
-                            try {
-                                // Parse the JSON string
-                                const jsonData = JSON.parse(block.display_content.json_block);
-                                // Create artifact in the same format as the UI expects
-                                artifacts.push({
-                                    id: block.id || `artifact_${artifacts.length}`,
-                                    type: jsonData.language || 'text',
-                                    title: jsonData.filename || block.name || 'Artifact',
-                                    content: jsonData.code || jsonData.content || ''
-                                });
-                            } catch (error) {
-                                console.warn('Failed to parse json_block:', error);
-                            }
                         }
                     }
                     // Ignore tool_result, token_budget, and other non-text blocks
@@ -1044,14 +1087,51 @@ class ChatGPTData {
     }
 
     // Conversation management
-    async addConversations(newConversations) {
-        // Merge with existing, avoiding duplicates
-        const existingIds = new Set(this.conversations.map(c => c.id));
+    /**
+     * Detect duplicate conversations
+     * @returns {Object} - { duplicates: [], new: [] }
+     */
+    detectDuplicates(newConversations) {
+        const duplicates = [];
+        const newConvs = [];
 
-        newConversations.forEach(conv => {
-            if (!existingIds.has(conv.id)) {
+        newConversations.forEach(newConv => {
+            const existing = this.conversations.find(c => c.id === newConv.id);
+            if (existing) {
+                duplicates.push({
+                    id: newConv.id,
+                    old: existing,
+                    new: newConv
+                });
+            } else {
+                newConvs.push(newConv);
+            }
+        });
+
+        return { duplicates, new: newConvs };
+    }
+
+    /**
+     * Add conversations with duplicate handling
+     * @param {Array} conversationsToAdd - Array of conversations to add
+     * @param {Array} duplicatesToOverwrite - Array of conversation IDs to overwrite (optional)
+     */
+    async addConversations(conversationsToAdd, duplicatesToOverwrite = []) {
+        const overwriteSet = new Set(duplicatesToOverwrite);
+
+        conversationsToAdd.forEach(conv => {
+            const existingIndex = this.conversations.findIndex(c => c.id === conv.id);
+
+            if (existingIndex !== -1) {
+                // Duplicate exists
+                if (overwriteSet.has(conv.id)) {
+                    // Overwrite existing
+                    this.conversations[existingIndex] = conv;
+                }
+                // If not in overwriteSet, skip (keep old)
+            } else {
+                // New conversation, add it
                 this.conversations.push(conv);
-                existingIds.add(conv.id);
             }
         });
 

@@ -148,12 +148,34 @@
         align-items: center;
     }
 
+    /* Hide thread search toggle button (old version) */
+    .thread-search-toggle {
+        display: none !important;
+    }
+
+    /* Adjust thread search container for mobile - hide by default */
+    .thread-search-container {
+        padding: 0;
+        gap: 0;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        border-bottom: none;
+    }
+
     /* Hide thread search by default on mobile */
     .thread-search {
         display: none;
-        width: 100%;
+        position: absolute;
+        top: 50px; /* Below chat header */
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background-color: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        padding: 12px;
         flex-direction: row;
         gap: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     /* Show search when active */
@@ -161,26 +183,28 @@
         display: flex;
     }
 
-    /* Hide question navigator from top bar on mobile */
-    .question-navigator {
-        display: none;
+    /* Hide question navigator from top bar on mobile - moved to bottom nav */
+    .thread-search-container .question-navigator {
+        display: none !important;
     }
 
     /* ========== MOBILE BOTTOM NAVIGATION ========== */
-    /* Create a bottom navigation bar for mobile */
+    /* Mobile bottom nav container */
+    .mobile-bottom-nav {
+        display: none;
+    }
+
     .chat-view::after {
         content: '';
         display: block;
         height: 60px;
         flex-shrink: 0;
     }
-
-    /* Mobile bottom nav container - will be added by JS if needed, or we can use a different approach */
 }
 
 /* ========== MOBILE BOTTOM NAVIGATION BAR ========== */
 @media (max-width: 768px) {
-    /* We'll add a mobile-bottom-nav class that can be toggled */
+    /* Mobile bottom nav */
     .mobile-bottom-nav {
         display: flex;
         position: fixed;
@@ -192,7 +216,7 @@
         padding: 8px 12px;
         gap: 8px;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         z-index: 50;
         box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
     }
@@ -201,6 +225,7 @@
         display: flex;
         flex: 1;
         max-width: none;
+        width: 100%;
     }
 
     .mobile-bottom-nav .question-select {
@@ -211,6 +236,11 @@
 
     .mobile-bottom-nav .question-nav-btn {
         flex-shrink: 0;
+    }
+
+    /* Add spacing to messages container to account for bottom nav */
+    .messages-container {
+        padding-bottom: 70px;
     }
 
     /* Upload state - adjust padding */
@@ -237,9 +267,42 @@
 
     /* Chat header - adjust for mobile */
     .chat-header {
-        padding: 6px 12px;
+        padding: 6px 8px;
         gap: 6px;
         min-height: 50px;
+        flex-wrap: nowrap;
+    }
+
+    /* Chat header actions container */
+    .chat-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    /* Mobile search icon button in header */
+    .mobile-search-icon-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 6px;
+        transition: background-color 0.2s;
+    }
+
+    .mobile-search-icon-btn:hover {
+        background-color: var(--hover-bg);
+        color: var(--text-primary);
+    }
+
+    .mobile-search-icon-btn svg {
+        width: 20px;
+        height: 20px;
     }
 
     .sidebar-toggle {

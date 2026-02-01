@@ -232,14 +232,165 @@ class ChatGPTParserApp {
         }
 
         if (totalConversations.length > 0) {
-            await this.data.addConversations(totalConversations);
-            alert(`Successfully imported ${totalConversations.length} conversation(s)!`);
-            this.updateUI();
+            // Check for duplicates
+            const { duplicates, new: newConvs } = this.data.detectDuplicates(totalConversations);
+
+            if (duplicates.length > 0) {
+                // Show duplicate dialog
+                this.showDuplicateDialog(duplicates, newConvs, totalConversations.length);
+            } else {
+                // No duplicates, import all
+                await this.data.addConversations(totalConversations);
+                alert(`Successfully imported ${totalConversations.length} conversation(s)!`);
+                this.updateUI();
+            }
         } else {
             alert('No valid conversations found in the uploaded file(s).');
         }
 
         document.getElementById('fileInput').value = '';
+    }
+
+    showDuplicateDialog(duplicates, newConvs, totalCount) {
+        const dialog = document.getElementById('duplicateDialog');
+        const summary = document.getElementById('duplicateSummary');
+        const list = document.getElementById('duplicateList');
+        const cancelBtn = document.getElementById('cancelDuplicate');
+        const confirmBtn = document.getElementById('confirmDuplicate');
+        const applyBtn = document.getElementById('applyDuplicateAction');
+        const radioButtons = document.querySelectorAll('input[name="duplicateAction"]');
+
+        // Set summary
+        summary.textContent = `Found ${duplicates.length} duplicate(s) and ${newConvs.length} new conversation(s).`;
+
+        // Build duplicate list
+        list.innerHTML = '';
+        this.duplicateChoices = new Map(); // Store individual choices
+
+        duplicates.forEach(dup => {
+            const item = document.createElement('div');
+            item.className = 'duplicate-item';
+            item.dataset.id = dup.id;
+
+            const oldDate = new Date(dup.old.updateTime * 1000).toLocaleDateString();
+            const newDate = new Date(dup.new.updateTime * 1000).toLocaleDateString();
+            const oldPairCount = dup.old.pairs?.length || 0;
+            const newPairCount = dup.new.pairs?.length || 0;
+
+            item.innerHTML = `
+                <div class="duplicate-item-info">
+                    <div class="duplicate-item-title">${HtmlUtils.escapeHtml(dup.old.title)}</div>
+                    <div class="duplicate-item-meta">
+                        <span><span class="duplicate-badge old">EXISTING</span> ${oldDate} • ${oldPairCount} messages</span>
+                        <span><span class="duplicate-badge new">NEW</span> ${newDate} • ${newPairCount} messages</span>
+                    </div>
+                </div>
+                <div class="duplicate-item-choices">
+                    <button class="duplicate-choice-btn" data-action="keep" title="Keep existing">Keep Old</button>
+                    <button class="duplicate-choice-btn" data-action="overwrite" title="Replace with new">Use New</button>
+                </div>
+            `;
+
+            // Add click handlers for choice buttons
+            const buttons = item.querySelectorAll('.duplicate-choice-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    buttons.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    this.duplicateChoices.set(dup.id, btn.dataset.action);
+                });
+            });
+
+            // Default choice: keep old
+            this.duplicateChoices.set(dup.id, 'keep');
+            item.querySelector('[data-action="keep"]').classList.add('selected');
+
+            list.appendChild(item);
+        });
+
+        // Reset UI
+        radioButtons.forEach(radio => radio.checked = false);
+        document.querySelector('input[name="duplicateAction"][value="keepOld"]').checked = true;
+        applyBtn.style.display = 'none';
+        confirmBtn.style.display = 'block';
+
+        // Show dialog
+        dialog.style.display = 'flex';
+
+        // Set up event handlers
+        const handleActionChange = () => {
+            const selected = document.querySelector('input[name="duplicateAction"]:checked').value;
+            const items = document.querySelectorAll('.duplicate-item');
+            const choiceButtons = document.querySelectorAll('.duplicate-choice-btn');
+
+            if (selected === 'choose') {
+                items.forEach(item => item.style.display = 'flex');
+                choiceButtons.forEach(btn => btn.disabled = false);
+                applyBtn.style.display = 'block';
+                confirmBtn.style.display = 'none';
+            } else {
+                items.forEach(item => item.style.display = 'none');
+                confirmBtn.style.display = 'block';
+                applyBtn.style.display = 'none';
+            }
+        };
+
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', handleActionChange);
+        });
+
+        // Cancel button
+        cancelBtn.onclick = () => {
+            dialog.style.display = 'none';
+        };
+
+        // Import non-duplicates only (for keepOld and overwrite)
+        confirmBtn.onclick = async () => {
+            const selected = document.querySelector('input[name="duplicateAction"]:checked').value;
+
+            if (selected === 'keepOld') {
+                // Import only new conversations
+                await this.data.addConversations(newConvs);
+                alert(`Imported ${newConvs.length} new conversation(s). Skipped ${duplicates.length} duplicate(s).`);
+            } else if (selected === 'overwrite') {
+                // Import all, overwriting duplicates
+                const overwriteIds = duplicates.map(d => d.id);
+                await this.data.addConversations([...newConvs, ...duplicates.map(d => d.new)], overwriteIds);
+                alert(`Imported ${totalCount} conversation(s). ${duplicates.length} duplicate(s) were replaced.`);
+            }
+
+            dialog.style.display = 'none';
+            this.updateUI();
+        };
+
+        // Apply individual choices
+        applyBtn.onclick = async () => {
+            const overwriteIds = [];
+            let keepCount = 0;
+            let overwriteCount = 0;
+
+            this.duplicateChoices.forEach((action, id) => {
+                if (action === 'overwrite') {
+                    overwriteIds.push(id);
+                    overwriteCount++;
+                } else {
+                    keepCount++;
+                }
+            });
+
+            // Get new conversations to import (for overwrite)
+            const newToImport = duplicates
+                .filter(d => overwriteIds.includes(d.id))
+                .map(d => d.new);
+
+            await this.data.addConversations([...newConvs, ...newToImport], overwriteIds);
+
+            alert(`Imported ${newConvs.length + newToImport.length} conversation(s). ` +
+                  `${keepCount} kept as-is, ${overwriteCount} replaced.`);
+
+            dialog.style.display = 'none';
+            this.updateUI();
+        };
     }
 
     toggleFolder(folderId) {
@@ -433,6 +584,11 @@ class ChatGPTParserApp {
 
             // Use QuestionNavigator module to populate dropdown and setup scroll observer
             this.questionNavigator.populate(conv.pairs);
+
+            // Setup mobile bottom navigation after rendering
+            if (this.mobileUI.isMobile()) {
+                this.mobileUI.setupMobileBottomNav();
+            }
 
             // Scroll to highlighted pair if set
             if (this.highlightedPairId) {

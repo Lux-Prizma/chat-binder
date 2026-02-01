@@ -220,13 +220,21 @@
                                 </svg>
                             </button>
                         </div>
-                        <button class="delete-thread-btn" id="deleteThreadBtn" title="Delete entire thread">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                            Delete Thread
-                        </button>
+                        <div class="chat-header-actions">
+                            <button class="mobile-search-icon-btn" id="mobileSearchIconBtn" title="Search">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </button>
+                            <button class="delete-thread-btn" id="deleteThreadBtn" title="Delete entire thread">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                                <span>Delete</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Thread Search -->
@@ -525,6 +533,38 @@
                 <button class="modal-btn modal-btn-cancel" id="cancelDateFilter">Cancel</button>
                 <button class="modal-btn modal-btn-confirm" id="resetDateFilter">Reset</button>
                 <button class="modal-btn modal-btn-confirm primary" id="applyDateFilter">Apply Filter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duplicate Handler Dialog -->
+    <div id="duplicateDialog" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Duplicate Conversations Detected</h2>
+                <p id="duplicateSummary">Some conversations already exist in your library.</p>
+            </div>
+            <div class="modal-body duplicate-dialog-body">
+                <div class="duplicate-global-actions">
+                    <label class="radio-option">
+                        <input type="radio" name="duplicateAction" value="keepOld" checked>
+                        <span><strong>Keep existing</strong> - Skip all duplicates</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="duplicateAction" value="overwrite">
+                        <span><strong>Replace all</strong> - Overwrite all existing with new</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="duplicateAction" value="choose">
+                        <span><strong>Choose individually</strong> - Decide for each duplicate</span>
+                    </label>
+                </div>
+                <div id="duplicateList" class="duplicate-list"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="cancelDuplicate">Cancel Import</button>
+                <button class="modal-btn modal-btn-confirm primary" id="confirmDuplicate">Import Non-Duplicates</button>
+                <button class="modal-btn modal-btn-confirm primary" id="applyDuplicateAction" style="display: none;">Apply Choices</button>
             </div>
         </div>
     </div>

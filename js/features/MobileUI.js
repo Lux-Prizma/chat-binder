@@ -3,6 +3,8 @@
  * - Sidebar drawer management
  * - Overlay management
  * - Mobile menu button
+ * - Mobile search toggle
+ * - Bottom navigation with question navigator
  * - Touch gestures
  */
 
@@ -13,6 +15,7 @@ export class MobileUI {
         this.overlay = null;
         this.mobileMenuBtn = null;
         this.isDrawerOpen = false;
+        this.bottomNav = null;
 
         this.init();
     }
@@ -40,6 +43,14 @@ export class MobileUI {
         this.handleResize();
         this.setupSearchToggle();
         this.setupMobileBottomNav();
+
+        // Listen for window resize to setup bottom nav after resize
+        window.addEventListener('resize', () => {
+            this.handleResize();
+            if (this.isMobile()) {
+                this.setupMobileBottomNav();
+            }
+        });
     }
 
     bindEvents() {
@@ -142,23 +153,42 @@ export class MobileUI {
 
     // Setup mobile search toggle functionality
     setupSearchToggle() {
-        const searchToggle = document.getElementById('threadSearchToggle');
+        // Mobile search icon button in header
+        const mobileSearchIconBtn = document.getElementById('mobileSearchIconBtn');
         const threadSearch = document.querySelector('.thread-search');
+        const threadSearchInput = document.getElementById('threadSearchInput');
 
-        if (!searchToggle || !threadSearch) return;
+        if (mobileSearchIconBtn && threadSearch) {
+            mobileSearchIconBtn.addEventListener('click', () => {
+                const isActive = threadSearch.classList.toggle('active');
+                if (isActive && threadSearchInput) {
+                    // Use timeout to ensure the display is set before focusing
+                    setTimeout(() => {
+                        threadSearchInput.focus();
+                    }, 100);
+                }
+            });
+        }
 
-        searchToggle.addEventListener('click', () => {
-            threadSearch.classList.toggle('active');
-            if (threadSearch.classList.contains('active')) {
-                const searchInput = document.getElementById('threadSearchInput');
-                if (searchInput) searchInput.focus();
-            }
-        });
+        // Old thread search toggle button (if exists) - remove or keep for compatibility
+        const searchToggle = document.getElementById('threadSearchToggle');
+        if (searchToggle && threadSearch) {
+            searchToggle.addEventListener('click', () => {
+                threadSearch.classList.toggle('active');
+                if (threadSearch.classList.contains('active') && threadSearchInput) {
+                    setTimeout(() => {
+                        threadSearchInput.focus();
+                    }, 100);
+                }
+            });
+        }
 
         // Close search when clicking outside
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.thread-search-container')) {
-                threadSearch.classList.remove('active');
+            if (!e.target.closest('.thread-search-container') &&
+                !e.target.closest('.mobile-search-icon-btn') &&
+                !e.target.closest('#threadSearchToggle')) {
+                if (threadSearch) threadSearch.classList.remove('active');
             }
         });
     }
@@ -184,21 +214,63 @@ export class MobileUI {
             const clonedNavigator = questionNavigator.cloneNode(true);
             bottomNav.appendChild(clonedNavigator);
 
-            // Insert before the messages container ends
+            // Insert before the messages container ends (append to chatView)
             chatView.appendChild(bottomNav);
+
+            // Re-bind events to the cloned navigator
+            this.setupBottomNavEvents(bottomNav);
         }
 
-        // Re-bind events to the cloned navigator
-        const originalSelect = document.getElementById('questionSelect');
-        const clonedSelect = bottomNav.querySelector('#questionSelect');
+        this.bottomNav = bottomNav;
+    }
 
+    setupBottomNavEvents(bottomNav) {
+        // Get all original controls
+        const originalSelect = document.getElementById('questionSelect');
+        const originalButtons = {
+            firstQuestionBtn: document.getElementById('firstQuestionBtn'),
+            prevQuestionBtn: document.getElementById('prevQuestionBtn'),
+            nextQuestionBtn: document.getElementById('nextQuestionBtn'),
+            lastQuestionBtn: document.getElementById('lastQuestionBtn')
+        };
+
+        // Get all cloned controls using class selectors instead of ID
+        const clonedSelect = bottomNav.querySelector('select');
+        const clonedButtons = {
+            firstQuestionBtn: bottomNav.querySelector('.question-nav-btn[title="First question"]'),
+            prevQuestionBtn: bottomNav.querySelector('.question-nav-btn[title="Previous question"]'),
+            nextQuestionBtn: bottomNav.querySelector('.question-nav-btn[title="Next question"]'),
+            lastQuestionBtn: bottomNav.querySelector('.question-nav-btn[title="Last question"]')
+        };
+
+        // Sync the select dropdowns
         if (originalSelect && clonedSelect) {
-            clonedSelect.id = 'questionSelectMobile';
+            // When mobile select changes, update desktop and trigger change event
             clonedSelect.addEventListener('change', (e) => {
-                // Trigger the original select's change event
-                originalSelect.value = e.target.value;
-                originalSelect.dispatchEvent(new Event('change'));
+                const value = e.target.value;
+                originalSelect.value = value;
+
+                // Manually trigger the change handler
+                const event = new Event('change', { bubbles: true, cancelable: true });
+                originalSelect.dispatchEvent(event);
+            });
+
+            // When desktop select changes, update mobile
+            originalSelect.addEventListener('change', (e) => {
+                clonedSelect.value = e.target.value;
             });
         }
+
+        // Sync navigation buttons - click the original when cloned is clicked
+        Object.entries(clonedButtons).forEach(([key, clonedBtn]) => {
+            const originalBtn = originalButtons[key];
+            if (originalBtn && clonedBtn) {
+                clonedBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    originalBtn.click();
+                });
+            }
+        });
     }
 }
