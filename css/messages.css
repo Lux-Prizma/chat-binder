@@ -202,8 +202,8 @@
 .message-text blockquote {
     margin: 16px 0;
     padding: 12px 16px;
-    border-left: 4px solid var(--primary-color);
-    background-color: rgba(59, 130, 246, 0.1);
+    border-left: 4px solid var(--accent-color);
+    background-color: var(--blockquote-bg);
     color: var(--text-secondary);
     font-style: italic;
 }
@@ -259,24 +259,24 @@
 
 /* Links */
 .message-text a.message-link {
-    color: #7ab8ff;
+    color: var(--link-color);
     text-decoration: none;
     border-bottom: 1px solid transparent;
     transition: border-color 0.2s ease, color 0.2s ease;
 }
 
 .message-text a.message-link:hover {
-    color: #6aa0e0;
-    border-bottom-color: #6aa0e0;
+    color: var(--link-hover);
+    border-bottom-color: var(--link-hover);
 }
 
 .message-text a.message-link:visited {
-    color: #c58aff;
+    color: var(--link-visited);
 }
 
 .message-text a.message-link:visited:hover {
-    color: #b07ae0;
-    border-bottom-color: #b07ae0;
+    color: var(--link-visited-hover);
+    border-bottom-color: var(--link-visited-hover);
 }
 
 /* ========== THINKING SECTION ========== */
@@ -304,7 +304,7 @@
 }
 
 .thinking-toggle:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--bg-hover);
     color: var(--text-primary);
 }
 
@@ -346,7 +346,7 @@
 
 .model-badge {
     padding: 5px 12px;
-    background-color: var(--btn-primary);
+    background-color: var(--model-badge-bg);
     color: white;
     border-radius: 4px;
     font-size: 12px;
@@ -370,7 +370,7 @@
 }
 
 .message-action-btn:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--bg-hover);
     color: var(--text-primary);
 }
 
@@ -384,8 +384,8 @@
 }
 
 .message-action-btn.star.starred {
-    color: #fbbf24;
-    border-color: #fbbf24;
+    color: var(--star-color);
+    border-color: var(--star-color);
 }
 
 .timestamp-display {
@@ -403,22 +403,22 @@
 }
 
 .pair-container.highlighted-starred {
-    border-color: #fbbf24;
-    background-color: rgba(251, 191, 36, 0.05);
-    box-shadow: 0 0 20px rgba(251, 191, 36, 0.1);
+    border-color: var(--star-color);
+    background-color: color-mix(in srgb, var(--star-color) 5%, transparent);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--star-color) 10%, transparent);
 }
 
 /* ========== SEARCH HIGHLIGHT ========== */
 .search-highlight {
-    background-color: #ffeb3b;
-    color: #000;
+    background-color: var(--search-highlight-bg);
+    color: var(--search-highlight-text);
     border-radius: 2px;
     padding: 0 2px;
     font-weight: 500;
 }
 
 .search-highlight.active {
-    background-color: #ff9800;
-    color: #fff;
-    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.3);
+    background-color: var(--search-highlight-active-bg);
+    color: var(--search-highlight-active-text);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--search-highlight-active-bg) 30%, transparent);
 }

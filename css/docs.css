@@ -1,0 +1,473 @@
+/**
+ * Documentation Styles
+ * Styles for the in-app documentation drawer component
+ */
+
+/* Documentation Container */
+.docs-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Drawer Component */
+.docs-drawer {
+    background: var(--bg-secondary, #1e1e1e);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.docs-drawer:hover {
+    border-color: var(--accent-color, #6366f1);
+}
+
+/* Drawer Header */
+.docs-drawer-header {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--bg-secondary, #1e1e1e);
+    transition: background 0.2s ease;
+}
+
+.docs-drawer-header:hover {
+    background: var(--bg-tertiary, #2a2a2a);
+}
+
+.docs-drawer-icon {
+    font-size: 20px;
+    margin-right: 12px;
+    line-height: 1;
+}
+
+.docs-drawer-title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.docs-drawer-arrow {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.docs-drawer-arrow.expanded {
+    transform: rotate(180deg);
+}
+
+/* Drawer Content */
+.docs-drawer-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    background: var(--bg-primary, #141414);
+}
+
+.docs-drawer-content.expanded {
+    max-height: 2000px;
+    padding: 20px;
+}
+
+/* Steps Component */
+.docs-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.docs-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.docs-step-number {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-color, #6366f1);
+    color: white;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.docs-step-content h4 {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.docs-step-content p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary, #a0a0a0);
+    white-space: pre-line;
+}
+
+/* Platforms Component */
+.docs-platforms {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.docs-platform {
+    background: var(--bg-secondary, #1e1e1e);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.docs-platform-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.docs-platform-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.docs-platform-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--success-color, #22c55e);
+    color: white;
+}
+
+.docs-platform p {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.docs-platform-formats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+.docs-platform-formats strong {
+    color: var(--text-primary, #e0e0e0);
+    margin-right: 8px;
+}
+
+.format-tag {
+    padding: 3px 10px;
+    background: var(--accent-color, #6366f1);
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: monospace;
+}
+
+.docs-platform-steps {
+    font-size: 13px;
+}
+
+.docs-platform-steps strong {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.docs-platform-steps ol {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.docs-platform-steps li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+/* FAQ Component */
+.docs-faq {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.docs-faq-item {
+    border-bottom: 1px solid var(--border-color, #333);
+    padding-bottom: 16px;
+}
+
+.docs-faq-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.docs-faq-question {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.docs-faq-answer {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+/* Shortcuts Component */
+.docs-shortcuts {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.docs-shortcut {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+.docs-shortcut:last-child {
+    border-bottom: none;
+}
+
+.shortcut-action {
+    font-size: 14px;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.shortcut-keys {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.shortcut-keys kbd {
+    padding: 4px 10px;
+    background: var(--bg-tertiary, #2a2a2a);
+    border: 1px solid var(--border-color, #444);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--text-primary, #e0e0e0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* List Component */
+.docs-list {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.docs-list li {
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.docs-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .docs-container {
+        padding: 16px;
+    }
+
+    .docs-drawer-header {
+        padding: 14px 16px;
+    }
+
+    .docs-drawer-content.expanded {
+        padding: 16px;
+    }
+
+    .docs-step {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .docs-step-number {
+        width: 28px;
+        height: 28px;
+        font-size: 13px;
+    }
+
+    .docs-platform-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .shortcut-action {
+        font-size: 13px;
+    }
+
+    .shortcut-keys kbd {
+        padding: 3px 8px;
+        font-size: 12px;
+    }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+    .docs-drawer {
+        background: var(--bg-secondary, #1e1e1e);
+    }
+
+    .docs-drawer-content {
+        background: var(--bg-primary, #141414);
+    }
+
+    .docs-step-number {
+        background: var(--accent-color, #818cf8);
+    }
+}
+
+/* Animation for drawer opening */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.docs-drawer-content.expanded {
+    animation: slideDown 0.3s ease;
+}
+
+/* Print styles */
+@media print {
+    .docs-drawer {
+        page-break-inside: avoid;
+        border: 1px solid #ccc;
+    }
+
+    .docs-drawer-content {
+        max-height: none !important;
+        display: block !important;
+    }
+
+    .docs-drawer-arrow {
+        display: none;
+    }
+}
+
+/* GitHub Section */
+.docs-github {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.github-description {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.github-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.github-link,
+.github-star-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.github-link {
+    background: var(--bg-tertiary, #2a2a2a);
+    color: var(--text-primary, #e0e0e0);
+    border: 1px solid var(--border-color, #444);
+}
+
+.github-link:hover {
+    background: var(--border-color, #444);
+    border-color: var(--accent-color, #6366f1);
+}
+
+.github-star-btn {
+    background: var(--accent-color, #6366f1);
+    color: white;
+    border: none;
+}
+
+.github-star-btn:hover {
+    background: var(--accent-hover, #5558e6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.github-link svg,
+.github-star-btn svg {
+    flex-shrink: 0;
+}
+
+.github-encouragement {
+    margin: 0;
+    padding: 12px 16px;
+    background: var(--bg-tertiary, #2a2a2a);
+    border-left: 3px solid var(--accent-color, #6366f1);
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+/* Responsive GitHub section */
+@media (max-width: 768px) {
+    .github-links {
+        flex-direction: column;
+    }
+
+    .github-link,
+    .github-star-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .github-encouragement {
+        font-size: 12px;
+    }
+}

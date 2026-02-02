@@ -17,7 +17,7 @@
 }
 
 .mobile-menu-btn:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--bg-hover);
 }
 
 .mobile-menu-btn:active {
@@ -57,7 +57,7 @@
 }
 
 .thread-search-toggle:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--bg-hover);
     color: var(--text-primary);
 }
 
@@ -296,7 +296,7 @@
     }
 
     .mobile-search-icon-btn:hover {
-        background-color: var(--hover-bg);
+        background-color: var(--bg-hover);
         color: var(--text-primary);
     }
 
@@ -643,16 +643,16 @@
 
     /* Add active states for touch */
     .nav-tab:active {
-        background-color: var(--hover-bg);
+        background-color: var(--bg-hover);
         transform: scale(0.98);
     }
 
     .conversation-item:active {
-        background-color: var(--hover-bg);
+        background-color: var(--bg-hover);
     }
 
     .folder-header:active {
-        background-color: var(--hover-bg);
+        background-color: var(--bg-hover);
     }
 }
 
@@ -692,7 +692,7 @@
     input:focus-visible,
     select:focus-visible,
     textarea:focus-visible {
-        outline: 2px solid var(--btn-primary);
+        outline: 2px solid var(--accent-color);
         outline-offset: 2px;
     }
 

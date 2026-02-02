@@ -180,5 +180,128 @@
     "de": "Deutsch",
     "ja": "日本語",
     "ko": "한국어"
+  },
+  "docs": {
+    "shared": {
+      "formats": "支持的格式",
+      "howToExport": "如何导出"
+    },
+    "gettingStarted": {
+      "title": "入门指南",
+      "whatIs": {
+        "title": "什么是 ChatBinder？",
+        "content": "ChatBinder 是一个本地网络应用程序，用于查看、组织和管理您的 LLM 对话历史。它完全在您的浏览器中运行 - 数据不会离开您的设备。您可以把它视为个人聊天档案管理器。"
+      },
+      "quickStart": {
+        "title": "快速入门指南",
+        "content": "1. 从 ChatGPT、Claude 或 DeepSeek 导出您的对话\n2. 在浏览器中打开 ChatBinder\n3. 点击「导入聊天记录」并选择导出的文件\n4. 您的对话将显示在侧边栏中，可以开始浏览了！"
+      },
+      "firstImport": {
+        "title": "首次导入",
+        "content": "首次导入时，ChatBinder 将解析所有对话并将它们存储在浏览器的 IndexedDB 中。对于大文件，这可能需要一些时间。导入完成后，您就可以搜索、排序、星标和组织您的对话了。"
+      }
+    },
+    "supportedPlatforms": {
+      "title": "支持的平台",
+      "chatgpt": {
+        "name": "ChatGPT",
+        "status": "完全支持",
+        "description": "使用 ChatGPT 的数据导出功能导入。支持 JSON 和 HTML 格式。",
+        "step1": "访问 chatgpt.com 并点击您的个人资料（左下角）",
+        "step2": "进入 设置 → 数据控制 → 导出数据",
+        "step3": "请求导出并等待邮件",
+        "step4": "下载 ZIP 文件并提取 conversations.json 或 chat.html",
+        "step5": "将文件导入 ChatBinder"
+      },
+      "claude": {
+        "name": "Claude",
+        "status": "完全支持",
+        "description": "使用 Claude 的数据导出功能导入。支持 JSON 格式。",
+        "step1": "访问 claude.com 并点击您的个人资料（左下角）",
+        "step2": "进入 设置 → 隐私 → 导出数据",
+        "step3": "选择时间范围并请求导出",
+        "step4": "收到邮件后下载 conversations.json 文件",
+        "step5": "将文件导入 ChatBinder"
+      },
+      "deepseek": {
+        "name": "DeepSeek",
+        "status": "完全支持",
+        "description": "从 DeepSeek Chat 和 DeepSeek Reasoner 导入。支持 JSON 格式，具有可折叠的思考部分。",
+        "step1": "访问 chat.deepseek.com 并点击您的个人资料（左下角）",
+        "step2": "进入 设置 → 数据 → 导出数据",
+        "step3": "下载 ZIP 文件",
+        "step4": "提取并将 conversations.json 导入 ChatBinder"
+      },
+      "gemini": {
+        "name": "Gemini",
+        "status": "部分支持",
+        "description": "通过 Google Takeout 提供有限支持。仅支持活动 JSON 格式，不支持 Gemini Gem 聊天。"
+      }
+    },
+    "organizing": {
+      "title": "组织对话",
+      "folders": "使用<strong>自定义文件夹</strong>按主题、项目或您喜欢的任何方式对对话进行分组。右键单击任何对话将其移动到文件夹。",
+      "customFolders": "点击侧边栏标题中的文件夹图标创建新文件夹。选择名称和颜色来可视化地组织您的对话。",
+      "moving": "移动对话：右键单击对话 → 选择「移动到...」→ 选择目标文件夹。您也可以在文件夹之间拖动对话。",
+      "starredThreads": "<strong>星标对话</strong>是您标记为收藏的整个对话。点击任何对话标题旁的星标图标来星标它。",
+      "starredPairs": "<strong>星标问答</strong>是对话中的单个问答交换。点击任何回复下方的 ☆ 星标按钮来添加书签。非常适合保存特定的答案。"
+    },
+    "searchFilter": {
+      "title": "搜索和筛选",
+      "globalSearch": "使用侧边栏中的<strong>全局搜索</strong>栏搜索所有对话。结果显示匹配的对话并突出显示文本。",
+      "conversationSearch": "查看对话时，使用<strong>对话内搜索</strong>查找特定消息。使用箭头按钮在匹配项之间导航。",
+      "sorting": "排序方式：<strong>最新/最旧（创建时间）</strong>、<strong>最近更新</strong>或<strong>字母顺序</strong>。使用侧边栏标题中的下拉菜单。",
+      "dateFilter": "使用日历图标按日期筛选对话。选择按<strong>创建日期</strong>、<strong>更新日期</strong>或<strong>包含范围内的消息</strong>进行筛选。"
+    },
+    "dataManagement": {
+      "title": "数据管理",
+      "saving": "点击<strong>保存项目</strong>将所有对话、文件夹和星标项目导出为 JSON 文件。使用此功能备份您的数据或传输到另一台设备。",
+      "clearing": "<strong>清除数据</strong>将从浏览器的存储中删除所有对话。此操作无法撤销！当您想要重新开始或在导入新数据集之前使用此功能。",
+      "privacy": "ChatBinder 是<strong>100% 本地</strong>的。所有数据都存储在浏览器的 IndexedDB 中。没有服务器、没有数据传输、没有跟踪。您的对话永远不会离开您的设备。"
+    },
+    "tipsShortcuts": {
+      "title": "提示和快捷键",
+      "search": "在对话中搜索",
+      "newFolder": "创建新文件夹",
+      "save": "保存项目"
+    },
+    "faq": {
+      "title": "常见问题",
+      "offline": {
+        "question": "ChatBinder 可以离线工作吗？",
+        "answer": "可以！一旦加载，ChatBinder 完全离线工作。您的数据本地存储在浏览器中，任何功能都不需要互联网连接。"
+      },
+      "storage": {
+        "question": "ChatBinder 可以存储多少数据？",
+        "answer": "ChatBinder 使用 IndexedDB，通常可以处理数百 MB 的数据。这相当于数千个对话，具体取决于它们的大小。"
+      },
+      "privacy": {
+        "question": "我的聊天数据是私密的吗？",
+        "answer": "当然。ChatBinder 是 100% 本地的 - 数据不会离开您的浏览器。没有账户、没有服务器、没有跟踪、没有分析。您的对话保留在您的设备上。"
+      },
+      "duplicates": {
+        "question": "如果导入重复的对话会怎样？",
+        "answer": "ChatBinder 会检测重复项并让您选择：保留现有、全部替换或单独选择。您可以只导入新对话，同时保留现有的组织结构。"
+      },
+      "formats": {
+        "question": "支持哪些文件格式？",
+        "answer": "ChatBinder 支持 ChatGPT（JSON 和 HTML）、Claude（JSON）、DeepSeek（JSON）和 Gemini activity JSON。解析器会自动检测格式类型。"
+      }
+    },
+    "github": {
+      "title": "在 GitHub 上支持",
+      "description": "ChatBinder 是开源的！查看代码仓库、报告问题或为项目做贡献。",
+      "repository": "在 GitHub 上查看",
+      "star": "在 GitHub 上标星",
+      "encouragement": "如果您觉得 ChatBinder 有帮助，请在 GitHub 上给我们一个 ⭐ 星标！这能帮助更多人发现这个项目，并激励我们持续改进。"
+    },
+    "themes": {
+      "title": "颜色主题",
+      "dark": "深色",
+      "bright": "明亮",
+      "professional": "专业",
+      "cool": "冷色",
+      "cute": "可爱"
+    }
   }
 }

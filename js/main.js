@@ -11,6 +11,7 @@ import { FolderManager } from './features/FolderManager.js';
 import { ContextMenu } from './features/ContextMenu.js';
 import { ConversationList } from './features/ConversationList.js';
 import { MobileUI } from './features/MobileUI.js';
+import { DocumentationRenderer } from './docs/DocumentationRenderer.js';
 
 // i18n imports
 import { init, t, changeLanguage, getCurrentLanguage, getAvailableLanguages } from './i18n/i18n.js';
@@ -41,6 +42,9 @@ class ChatGPTParserApp {
         // Mobile UI
         this.mobileUI = new MobileUI(eventBus);
 
+        // Documentation renderer (initialized later)
+        this.documentationRenderer = null;
+
         this.init();
     }
 
@@ -59,6 +63,9 @@ class ChatGPTParserApp {
             this.setupLanguageChangeHandler();
         }
 
+        // Initialize theme
+        this.initTheme();
+
         await this.data.loadFromStorage();
         this.currentSort = this.data.currentSort || 'newestCreated';
         document.getElementById('sortSelect').value = this.currentSort;
@@ -67,6 +74,38 @@ class ChatGPTParserApp {
         this.mobileUI.setupSearchToggle();
 
         this.updateUI();
+    }
+
+    initTheme() {
+        // Load saved theme or use default (dark)
+        const savedTheme = localStorage.getItem('chatbinder-theme') || 'dark';
+        this.setTheme(savedTheme);
+    }
+
+    setTheme(theme) {
+        // Remove existing theme
+        document.documentElement.removeAttribute('data-theme');
+
+        // Apply new theme
+        if (theme !== 'dark') {
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+
+        // Save to localStorage
+        localStorage.setItem('chatbinder-theme', theme);
+
+        // Update active state in UI
+        this.updateThemeUI(theme);
+    }
+
+    updateThemeUI(activeTheme) {
+        // Update theme option buttons
+        document.querySelectorAll('.theme-option').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.theme === activeTheme) {
+                btn.classList.add('active');
+            }
+        });
     }
 
     setupLanguageSwitcher() {
@@ -692,7 +731,43 @@ class ChatGPTParserApp {
         // Initialize language switcher if Options panel is opened
         if (tabName === 'options') {
             this.initLanguageSwitcher();
+            this.initThemeSwitcher();
         }
+
+        // Initialize documentation renderer if Help panel is opened
+        if (tabName === 'help') {
+            this.initDocumentation();
+        }
+    }
+
+    initThemeSwitcher() {
+        // Get all theme option buttons
+        const themeButtons = document.querySelectorAll('.theme-option');
+
+        // Set up click listeners
+        themeButtons.forEach(btn => {
+            // Remove existing listener to avoid duplicates
+            btn.removeEventListener('click', this.handleThemeChange);
+
+            // Add new listener
+            btn.addEventListener('click', () => {
+                const theme = btn.dataset.theme;
+                this.setTheme(theme);
+            });
+        });
+
+        // Update active state
+        const currentTheme = localStorage.getItem('chatbinder-theme') || 'dark';
+        this.updateThemeUI(currentTheme);
+    }
+
+    initDocumentation() {
+        // Initialize documentation renderer on first use
+        if (!this.documentationRenderer) {
+            this.documentationRenderer = new DocumentationRenderer('help-documentation-container');
+        }
+        // Render documentation (re-renders if language changed)
+        this.documentationRenderer.render();
     }
 
     initLanguageSwitcher() {

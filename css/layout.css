@@ -13,8 +13,8 @@
 .sidebar {
     width: 300px;
     height: 100%;
-    background-color: var(--bg-secondary);
-    border-right: 1px solid var(--border-color);
+    background: linear-gradient(to right, var(--bg-secondary), var(--bg-primary));
+    border-right: 2px solid var(--border-color);
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease;
@@ -48,7 +48,7 @@
 }
 
 .new-chat-btn:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--bg-hover);
 }
 
 .sidebar-search {
@@ -79,7 +79,7 @@
 }
 
 .sidebar-search input:focus {
-    border-color: var(--btn-primary);
+    border-color: var(--accent-color);
 }
 
 /* ========== SIDEBAR CONTROLS ========== */
@@ -103,7 +103,7 @@
 }
 
 .sort-select:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--bg-hover);
 }
 
 .filter-btn {
@@ -120,7 +120,7 @@
 }
 
 .filter-btn:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--bg-hover);
     color: var(--text-primary);
 }
 
@@ -232,11 +232,11 @@
 }
 
 .conversation-item:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--bg-hover);
 }
 
 .conversation-item.active {
-    background-color: var(--hover-bg);
+    background-color: var(--bg-hover);
 }
 
 .conversation-item .star-icon {
@@ -247,7 +247,7 @@
 }
 
 .conversation-item .star-icon.starred {
-    color: #fbbf24;
+    color: var(--star-color);
 }
 
 .conversation-item-title {
@@ -297,7 +297,7 @@
 }
 
 .footer-btn:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--bg-hover);
     color: var(--text-primary);
 }
 
@@ -372,8 +372,8 @@
 }
 
 .upload-box:hover {
-    border-color: var(--btn-primary);
-    background-color: var(--hover-bg);
+    border-color: var(--accent-color);
+    background-color: var(--bg-hover);
 }
 
 .upload-box svg {
@@ -395,7 +395,7 @@
 
 .upload-btn {
     padding: 14px 28px;
-    background-color: var(--btn-primary);
+    background-color: var(--accent-color);
     color: white;
     border: none;
     border-radius: 6px;
@@ -406,7 +406,7 @@
 }
 
 .upload-btn:hover {
-    background-color: var(--btn-primary-hover);
+    background-color: var(--accent-hover);
 }
 
 .upload-hint {
@@ -520,7 +520,7 @@
 }
 
 .mobile-search-icon-btn:hover {
-    background-color: var(--hover-bg);
+    background-color: var(--bg-hover);
     color: var(--text-primary);
 }
 
@@ -673,11 +673,11 @@
 }
 
 .duplicate-badge.old {
-    background-color: #ff6b6b20;
-    color: #ff6b6b;
+    background-color: var(--duplicate-old-bg);
+    color: var(--duplicate-old-text);
 }
 
 .duplicate-badge.new {
-    background-color: #51cf6620;
-    color: #51cf66;
+    background-color: var(--duplicate-new-bg);
+    color: var(--duplicate-new-text);
 }

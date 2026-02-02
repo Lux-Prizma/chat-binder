@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/messages.css">
+    <link rel="stylesheet" href="css/docs.css">
+    <link rel="stylesheet" href="css/themes.css">
     <!-- Mobile Override CSS -->
     <link rel="stylesheet" href="css/mobile-override.css">
     <!-- KaTeX for equation rendering -->
@@ -415,7 +417,7 @@
         </div>
     </div>
 
-    <!-- Help Panel (Placeholder) -->
+    <!-- Help Panel -->
     <div id="help-panel" class="tab-panel" style="display: none;">
         <div class="panel-overlay" onclick="window.app.closeTabPanel()"></div>
         <div class="panel-content">
@@ -429,25 +431,19 @@
                 </button>
             </div>
             <div class="panel-body">
-                <div class="panel-placeholder">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                        <circle cx="12" cy="17" r="0.5" fill="currentColor"></circle>
-                    </svg>
-                    <h3 data-i18n="panelContent.helpTitle">Help & Documentation</h3>
-                    <p data-i18n="panelContent.helpDescription">User guides, keyboard shortcuts, and documentation will be available here.</p>
+                <div id="help-documentation-container">
+                    <!-- Documentation will be rendered here by DocumentationRenderer -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Options Panel (Placeholder) -->
+    <!-- Options Panel -->
     <div id="options-panel" class="tab-panel" style="display: none;">
         <div class="panel-overlay" onclick="window.app.closeTabPanel()"></div>
         <div class="panel-content">
             <div class="panel-header">
-                <h2>Options</h2>
+                <h2 data-i18n="nav.options">Options</h2>
                 <button class="panel-close" onclick="window.app.closeTabPanel()">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -465,13 +461,52 @@
                         </select>
                     </div>
                 </div>
-                <div class="panel-placeholder">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                    </svg>
-                    <h3 data-i18n="panelContent.optionsTitle">Settings & Options</h3>
-                    <p data-i18n="panelContent.optionsDescription">Language preferences, themes, and display settings will be available here.</p>
+                <div class="panel-section">
+                    <h3 data-i18n="docs.themes.title">Color Theme</h3>
+                    <div class="theme-options">
+                        <div class="theme-grid">
+                            <button class="theme-option" data-theme="dark" title="Dark">
+                                <div class="theme-preview">
+                                    <div class="theme-color primary" style="background-color: #141414;"></div>
+                                    <div class="theme-color secondary" style="background-color: #1e1e1e;"></div>
+                                    <div class="theme-color accent" style="background-color: #10a37f;"></div>
+                                </div>
+                                <span class="theme-name" data-i18n="docs.themes.dark">Dark</span>
+                            </button>
+                            <button class="theme-option" data-theme="bright" title="Bright">
+                                <div class="theme-preview">
+                                    <div class="theme-color primary" style="background-color: #ffffff;"></div>
+                                    <div class="theme-color secondary" style="background-color: #f8fafc;"></div>
+                                    <div class="theme-color accent" style="background-color: #8b5cf6;"></div>
+                                </div>
+                                <span class="theme-name" data-i18n="docs.themes.bright">Bright</span>
+                            </button>
+                            <button class="theme-option" data-theme="professional" title="Professional">
+                                <div class="theme-preview">
+                                    <div class="theme-color primary" style="background-color: #0f172a;"></div>
+                                    <div class="theme-color secondary" style="background-color: #1e293b;"></div>
+                                    <div class="theme-color accent" style="background-color: #3b82f6;"></div>
+                                </div>
+                                <span class="theme-name" data-i18n="docs.themes.professional">Professional</span>
+                            </button>
+                            <button class="theme-option" data-theme="cool" title="Cool">
+                                <div class="theme-preview">
+                                    <div class="theme-color primary" style="background-color: #001529;"></div>
+                                    <div class="theme-color secondary" style="background-color: #002140;"></div>
+                                    <div class="theme-color accent" style="background-color: #1890ff;"></div>
+                                </div>
+                                <span class="theme-name" data-i18n="docs.themes.cool">Cool</span>
+                            </button>
+                            <button class="theme-option" data-theme="cute" title="Cute">
+                                <div class="theme-preview">
+                                    <div class="theme-color primary" style="background-color: #fdf2f8;"></div>
+                                    <div class="theme-color secondary" style="background-color: #fce7f3;"></div>
+                                    <div class="theme-color accent" style="background-color: #ec4899;"></div>
+                                </div>
+                                <span class="theme-name" data-i18n="docs.themes.cute">Cute</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
