@@ -8,7 +8,8 @@ const FORMAT_TYPES = {
     DEEPSEEK: 'deepseek',               // DeepSeek export
     CHATGPT_MAPPING: 'chatgpt_mapping', // ChatGPT data export
     SIMPLE: 'simple',                   // Simple message array
-    WRAPPED_SIMPLE: 'wrapped_simple'    // Nested simple format
+    WRAPPED_SIMPLE: 'wrapped_simple',   // Nested simple format
+    GEMINI: 'gemini'                    // Gemini/Google Takeout export
 };
 
 class ChatGPTData {
@@ -95,6 +96,17 @@ class ChatGPTData {
         return conv.conversation && conv.conversation.messages;
     }
 
+    /**
+     * Checks if conversation is in Gemini/Google Takeout format
+     * Google Takeout Activity has header, title, time, and safeHtmlItem
+     */
+    isGeminiFormat(conv) {
+        return (conv.header === "Gemini Apps" || conv.products?.includes("Gemini Apps")) &&
+               conv.title &&
+               conv.time &&
+               conv.safeHtmlItem;
+    }
+
     // =========================================================================
     // FORMAT DETECTION
     // =========================================================================
@@ -118,6 +130,10 @@ class ChatGPTData {
 
         if (this.isDeepSeekFormat(conv)) {
             return FORMAT_TYPES.DEEPSEEK;
+        }
+
+        if (this.isGeminiFormat(conv)) {
+            return FORMAT_TYPES.GEMINI;
         }
 
         if (this.isChatGPTMappingFormat(conv)) {
@@ -220,6 +236,21 @@ class ChatGPTData {
     }
 
     /**
+     * Parses Gemini/Google Takeout Activity format
+     * Format: { header, title, time, safeHtmlItem: [{ html }] }
+     * Each entry is a prompt-response pair encoded in the title/html fields
+     */
+    parseGeminiFormat(conv) {
+        return {
+            pairs: this.parseGeminiActivity(conv),
+            createTime: this.parseISO8601(conv.time),
+            updateTime: this.parseISO8601(conv.time),
+            source: 'gemini',
+            title: conv.title?.replace(/^Prompted\s+/, '') || 'Gemini Chat'
+        };
+    }
+
+    /**
      * Strategy map: format type → parser function
      */
     parseByFormat = {
@@ -228,7 +259,8 @@ class ChatGPTData {
         [FORMAT_TYPES.DEEPSEEK]: (conv) => this.parseDeepSeekFormat(conv),
         [FORMAT_TYPES.CHATGPT_MAPPING]: (conv) => this.parseChatGPTMappingFormat(conv),
         [FORMAT_TYPES.SIMPLE]: (conv) => this.parseSimpleFormat(conv),
-        [FORMAT_TYPES.WRAPPED_SIMPLE]: (conv) => this.parseWrappedSimpleFormat(conv)
+        [FORMAT_TYPES.WRAPPED_SIMPLE]: (conv) => this.parseWrappedSimpleFormat(conv),
+        [FORMAT_TYPES.GEMINI]: (conv) => this.parseGeminiFormat(conv)
     };
 
     // =========================================================================
@@ -320,6 +352,26 @@ class ChatGPTData {
                 parsed.updateTime
             );
 
+            // Extract conversation-level metadata
+            const conversationMetadata = {
+                // ChatGPT metadata
+                gizmoId: conv.gizmo_id || null,
+                gizmoType: conv.gizmo_type || null,
+                isArchived: conv.is_archived || false,
+                conversationTemplateId: conv.conversation_template_id || null,
+                memoryScope: conv.memory_scope || null,
+
+                // Claude metadata
+                accountId: conv.account?.uuid || null,
+                summary: conv.summary || null,
+
+                // DeepSeek metadata
+                // (none specific at conversation level)
+
+                // Original conversation IDs for reference
+                originalId: conv.id || conv.uuid || conv.conversation_id || null
+            };
+
             // Step 4: Return standardized conversation object
             return {
                 id: conv.conversation_id || conv.id || conv.uuid || `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -329,7 +381,12 @@ class ChatGPTData {
                 pairs: parsed.pairs,
                 starred: false,
                 source: parsed.source,
-                folderId: conv.folderId || null // Preserve folder assignment
+                folderId: conv.folderId || null, // Preserve folder assignment
+
+                // Add conversation metadata (only if non-empty)
+                ...(Object.keys(conversationMetadata).some(key => conversationMetadata[key] !== null) && {
+                    conversationMetadata: conversationMetadata
+                })
             };
         } catch (error) {
             console.error('Error parsing conversation:', error, 'Conversation:', conv);
@@ -373,7 +430,7 @@ class ChatGPTData {
                 pairs.push(currentPair);
             } else if (isAssistant && currentPair) {
                 // Add answer to current pair
-                currentPair.answers.push({
+                const answerObj = {
                     id: msg.id,
                     role: 'assistant',
                     content: msg.content || msg.text || '',
@@ -387,7 +444,24 @@ class ChatGPTData {
                     status: msg.status || null,
                     weight: msg.weight || null,
                     end_turn: msg.end_turn || null
-                });
+                };
+
+                // Extract citations if present
+                if (msg.metadata?.content_references && Array.isArray(msg.metadata.content_references)) {
+                    answerObj.citations = msg.metadata.content_references;
+                }
+
+                // Extract search results if present
+                if (msg.metadata?.search_result_groups && Array.isArray(msg.metadata.search_result_groups)) {
+                    answerObj.searchResults = msg.metadata.search_result_groups;
+                }
+
+                // Extract safe URLs if present
+                if (msg.metadata?.safe_urls && Array.isArray(msg.metadata.safe_urls)) {
+                    answerObj.safeUrls = msg.metadata.safe_urls;
+                }
+
+                currentPair.answers.push(answerObj);
             }
         });
 
@@ -482,6 +556,21 @@ class ChatGPTData {
                     msgObj.model = message.metadata?.model_slug ||
                                   message.metadata?.default_model_slug ||
                                   'GPT';
+                }
+
+                // Extract ChatGPT citations if present
+                if (message.metadata?.content_references && Array.isArray(message.metadata.content_references)) {
+                    msgObj.citations = message.metadata.content_references;
+                }
+
+                // Extract search results if present
+                if (message.metadata?.search_result_groups && Array.isArray(message.metadata.search_result_groups)) {
+                    msgObj.searchResults = message.metadata.search_result_groups;
+                }
+
+                // Extract safe URLs if present
+                if (message.metadata?.safe_urls && Array.isArray(message.metadata.safe_urls)) {
+                    msgObj.safeUrls = message.metadata.safe_urls;
                 }
 
                 tempMessages.push(msgObj);
@@ -612,13 +701,32 @@ class ChatGPTData {
             let hasAttachments = false; // Track file attachments
             const artifacts = []; // Store artifacts separately
             const attachmentMarkers = []; // Store file info for display
+            const contentTimings = []; // Store content block timings
 
             if (msg.content && Array.isArray(msg.content)) {
                 msg.content.forEach(block => {
                     if (block.type === 'text') {
                         textContent += block.text || '';
+                        // Capture timing information for text blocks
+                        if (block.start_timestamp || block.stop_timestamp) {
+                            contentTimings.push({
+                                type: 'text',
+                                start: block.start_timestamp || null,
+                                stop: block.stop_timestamp || null
+                            });
+                        }
                     } else if (block.type === 'tool_use') {
                         hasToolUse = true;
+
+                        // Capture timing for tool_use blocks
+                        if (block.start_timestamp || block.stop_timestamp) {
+                            contentTimings.push({
+                                type: 'tool_use',
+                                name: block.name,
+                                start: block.start_timestamp || null,
+                                stop: block.stop_timestamp || null
+                            });
+                        }
 
                         // Track if we've already captured an artifact from this block to avoid duplicates
                         let artifactCaptured = false;
@@ -759,6 +867,181 @@ class ChatGPTData {
                     toolUseOnly: hasToolUse && !textContent.trim(),
                     artifacts: artifacts.length > 0 ? artifacts : undefined // Store artifacts if present
                 };
+
+                // Add content timings if any were captured
+                if (contentTimings.length > 0) {
+                    answer.contentTimings = contentTimings;
+                }
+
+                // Extract tool_use approval metadata if present
+                if (hasToolUse && msg.content) {
+                    const toolUseBlocks = msg.content.filter(block => block.type === 'tool_use');
+                    if (toolUseBlocks.length > 0) {
+                        const toolUseMetadata = toolUseBlocks.map(block => ({
+                            name: block.name,
+                            id: block.id,
+                            approvalOptions: block.approval_options || null,
+                            approvalKey: block.approval_key || null,
+                            integrationName: block.integration_name || null,
+                            context: block.context || null
+                        }));
+                        if (toolUseMetadata.some(m => m.approvalOptions || m.approvalKey)) {
+                            answer.toolUseMetadata = toolUseMetadata;
+                        }
+                    }
+                }
+
+                currentPair.answers.push(answer);
+            }
+        });
+
+        return pairs;
+    }
+
+    // Parse Gemini Google Takeout Activity format
+    // Each activity entry has: { title: "Prompted ...", safeHtmlItem: [{ html: "..." }], time }
+    parseGeminiActivity(conv) {
+        const pairs = [];
+        const pairIndex = 1;
+
+        // Extract the user prompt from title (remove "Prompted " prefix)
+        const userPrompt = conv.title?.replace(/^Prompted\s+/, '') || '';
+
+        // Extract the assistant response from HTML
+        let htmlContent = '';
+        if (conv.safeHtmlItem && conv.safeHtmlItem.length > 0) {
+            htmlContent = conv.safeHtmlItem[0].html || '';
+        }
+
+        // Decode HTML entities (the content is JSON-encoded with unicode escapes like \u003cp\u003e)
+        let decodedContent = htmlContent;
+        try {
+            // First parse the unicode escape sequences
+            decodedContent = JSON.parse(`"${htmlContent}"`);
+        } catch (e) {
+            // If parsing fails, use as-is
+            decodedContent = htmlContent;
+        }
+
+        // Strip HTML tags to get plain text (simple approach)
+        const tempDiv = typeof document !== 'undefined' ? document.createElement('div') : null;
+        let plainText = decodedContent;
+        if (tempDiv) {
+            tempDiv.innerHTML = decodedContent;
+            plainText = tempDiv.textContent || tempDiv.innerText || '';
+        } else {
+            // Fallback: remove HTML tags with regex
+            plainText = decodedContent.replace(/<[^>]*>/g, '');
+        }
+
+        // Create the question-answer pair
+        const pair = {
+            id: `gemini_${Date.now()}`,
+            question: {
+                id: `gemini_q_${Date.now()}`,
+                role: 'user',
+                content: userPrompt,
+                timestamp: this.parseISO8601(conv.time),
+                metadata: conv
+            },
+            answers: [],
+            index: pairIndex,
+            starred: false
+        };
+
+        // Create the answer
+        const answer = {
+            id: `gemini_a_${Date.now()}`,
+            role: 'assistant',
+            content: plainText,
+            timestamp: this.parseISO8601(conv.time),
+            model: 'Gemini',
+            metadata: conv
+        };
+
+        // Store the original HTML if needed for future reference
+        if (htmlContent) {
+            answer.originalHtml = decodedContent;
+        }
+
+        pair.answers.push(answer);
+        pairs.push(pair);
+
+        return pairs;
+    }
+
+    // Parse Gemini contents format (for future use with actual Gemini conversation exports)
+    // Gemini uses contents array with data (parts) and role fields
+    parseGeminiContents(contents) {
+        const pairs = [];
+        let pairIndex = 1;
+        let currentPair = null;
+
+        contents.forEach((content, idx) => {
+            const role = content.role; // 'user' or 'model'
+            const isUser = role === 'user';
+            const isAssistant = role === 'model';
+
+            // Extract text from parts array
+            let textContent = '';
+            const parts = content.data || content.parts || [];
+
+            parts.forEach(part => {
+                // Handle different part formats
+                if (typeof part === 'string') {
+                    textContent += part;
+                } else if (part.text) {
+                    textContent += part.text;
+                } else if (part.inlineData) {
+                    // Handle base64 encoded data (images, etc.)
+                    // We'll add a marker for now
+                    textContent += `[${part.inlineData.mimeType || 'data'}]`;
+                }
+            });
+
+            // Skip empty content
+            if (!textContent.trim()) {
+                return;
+            }
+
+            // Parse timestamp if available
+            let timestamp = Date.now() / 1000;
+            if (content.createTime || content.created_at) {
+                timestamp = this.parseISO8601(content.createTime || content.created_at);
+            }
+
+            if (isUser) {
+                // Start a new pair
+                currentPair = {
+                    id: content.contentId || `gemini_${idx}`,
+                    question: {
+                        id: content.contentId || `gemini_${idx}`,
+                        role: 'user',
+                        content: textContent,
+                        timestamp: timestamp,
+                        metadata: content
+                    },
+                    answers: [],
+                    index: pairIndex++,
+                    starred: false
+                };
+                pairs.push(currentPair);
+            } else if (isAssistant && currentPair) {
+                // Add answer to current pair
+                const answer = {
+                    id: content.contentId || `gemini_${idx}_response`,
+                    role: 'assistant',
+                    content: textContent,
+                    timestamp: timestamp,
+                    model: 'Gemini',
+                    metadata: content
+                };
+
+                // Check for thinking/reasoning in metadata
+                if (content.thinking || content.reasoning) {
+                    answer.thinking = content.thinking || content.reasoning;
+                }
+
                 currentPair.answers.push(answer);
             }
         });
