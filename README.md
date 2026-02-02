@@ -57,6 +57,13 @@ Current version support ChatGPT，Claude and DeepSeek conversations, as well as 
 4. Request export and wait for the email (you can choose time range of your history)
 5. Download the JSON file `conversations.json` 
 
+**From Gemini (partial support):**
+1. Go to [google takeout]([https://takeout.google.com/])
+2. Select "my activity" and deselect all of others (Gemini Gem not support yet)
+3. In **My Activity options** -> **Activity format**, choose JSON
+4. In "My Activity content options", deselect all and keep Gemini
+5. Download the JSON file
+
 **From DeepSeek:**
 1. Go to [chat.deepseek.com](https://chat.deepseek.com)
 2. Click on your profile (botton-left)
@@ -168,4 +175,4 @@ This is a personal project for managing LLM conversations. Feel free to fork and
 
 ---
 
-**Made with ❤️ for better conversation management**
+**Made by LuxPrizma for better AI chat management**
